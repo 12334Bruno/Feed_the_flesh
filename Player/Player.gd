@@ -47,7 +47,7 @@ func take_player_input():
 	# Set last_direction when moving 
 	if x_input != 0 or y_input != 0:
 		last_direction = direction
-	print()
+	print("HAHAHAHAHAH")
 
 func update_player_movement(delta):
 	velocity = direction * SPEED
