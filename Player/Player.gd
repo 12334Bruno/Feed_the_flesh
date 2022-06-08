@@ -31,7 +31,6 @@ func _unhandled_input(event):
 		if held_item:
 			held_item = null
 		
-		print(result)
 		# Check for collision and for type of item
 		if result.get("collider") != null:
 			if result.get("collider").type == "pickupable_item":
