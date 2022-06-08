@@ -48,6 +48,8 @@ func take_player_input():
 	if x_input != 0 or y_input != 0:
 		last_direction = direction
 	
+	print("NEWNEWNEWNEWNEWNEWNEW")
+	
 func update_player_movement(delta):
 	velocity = direction * SPEED
 	velocity = move_and_slide(velocity)
