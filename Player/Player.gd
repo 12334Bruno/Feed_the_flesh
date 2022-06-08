@@ -52,6 +52,7 @@ func take_player_input():
 	print("HAHAHAHAHAH")
 	print("HAHAHAHAHAH")
 	print("HAHAHAHAHAH")
+	print("HUHUHUH")
 
 func update_player_movement(delta):
 	velocity = direction * SPEED
