@@ -1,7 +1,7 @@
 extends KinematicBody2D
 
 # Movement constatns
-var SPEED = 500
+var SPEED = 90
 
 # Movement
 var direction = Vector2.ZERO
@@ -11,9 +11,11 @@ var velocity = Vector2.ZERO
 # Items
 var held_item = null
 
+# World constatns
+var TILE_SIZE = 16
+
 func _physics_process(delta):
 	take_player_input()
-	check_for_interact()
 	interact()
 	update_player_movement(delta)
 
@@ -29,6 +31,12 @@ func _unhandled_input(event):
 		var result = space_state.intersect_ray(global_position, ray, [self, held_item])
 		
 		if held_item:
+			var snapped_position = Vector2()
+			snapped_position.x = stepify(global_position.x - 8, TILE_SIZE) + 8
+			snapped_position.y = stepify(global_position.y - 8, TILE_SIZE) + 8
+			
+			held_item.global_position = snapped_position
+			
 			held_item = null
 		
 		# Check for collision and for type of item
@@ -52,19 +60,9 @@ func update_player_movement(delta):
 	velocity = direction * SPEED
 	velocity = move_and_slide(velocity)
 
-func check_for_interact():
-	
-	# Detect any interactable objects with a raycast
-	var space_state = get_world_2d().direct_space_state
-	var ray = Vector2(100, 0).rotated(last_direction.angle()) + global_position
-	var result = space_state.intersect_ray(global_position, ray, [self, held_item])
-	
-	if result.get("collider") != null:
-		if result.get("collider").type == "pickupable_item":
-			pass
 func interact():
 	
 	if held_item:
-		held_item.global_position = global_position + (last_direction * 15)
+		held_item.global_position = global_position + (last_direction * 13)
 	
 	
