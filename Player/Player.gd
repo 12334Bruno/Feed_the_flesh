@@ -23,8 +23,6 @@ func _physics_process(delta):
 	highlight()
 	take_player_input()
 	update_player_movement(delta)
-	print("bra bla")
-	print("crack")
 
 
 func _unhandled_input(event):
