@@ -10,13 +10,18 @@ var velocity = Vector2.ZERO
 
 # Items
 var held_item = null
+var on_item = null
 
 # World constatns
 var TILE_SIZE = 16
 
+# Load scenes
+onready var Main = get_parent()
+onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
+
 func _physics_process(delta):
+	highlight()
 	take_player_input()
-	interact()
 	update_player_movement(delta)
 
 
@@ -25,11 +30,7 @@ func _unhandled_input(event):
 	# Check for interactable objects 
 	if event.is_action_pressed("ui_interact"):
 		
-		# Detect any interactable objects with a raycast
-		var space_state = get_world_2d().direct_space_state
-		var ray = Vector2(100, 0).rotated(last_direction.angle()) + global_position
-		var result = space_state.intersect_ray(global_position, ray, [self, held_item])
-		
+		# Snap released item to grid
 		if held_item:
 			var snapped_position = Vector2()
 			snapped_position.x = stepify(global_position.x - TILE_SIZE/2, TILE_SIZE) + TILE_SIZE/2
@@ -38,12 +39,10 @@ func _unhandled_input(event):
 			held_item.global_position = snapped_position
 			
 			held_item = null
-		
-		# Check for collision and for type of item
-		if result.get("collider") != null:
-			if result.get("collider").type == "pickupable_item":
-				held_item = result.get("collider")
 			
+		var player_position = global_position + Vector2(Globals.GRID_SIZE / 2, Globals.GRID_SIZE / 2)
+		var player_grid_pos = Grass.world_to_map(player_position)
+#		print(Main.world_tiles[player_grid_pos.x][player_grid_pos.y])
 			
 
 func take_player_input():
@@ -60,9 +59,17 @@ func update_player_movement(delta):
 	velocity = direction * SPEED
 	velocity = move_and_slide(velocity)
 
-func interact():
+# Highlight 
+func highlight():
+	var player_grid_pos = Grass.world_to_map(global_position)
+	var items = Main.world_tiles[player_grid_pos.y][player_grid_pos.x]
 	
-	if held_item:
-		held_item.global_position = global_position + (last_direction * 13)
-	
-	
+	if len(items) > 0:
+		if items[0].interactable:
+			if on_item != items[0] and on_item != null:
+				on_item.get_node("Sprite").material.set_shader_param("width", 0.0)
+			on_item = items[0]
+			items[0].get_node("Sprite").material.set_shader_param("width", 1.0)
+	elif on_item != null:
+		on_item.get_node("Sprite").material.set_shader_param("width", 0.0)
+

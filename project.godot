@@ -24,6 +24,10 @@ config/name="Spread_flesh"
 run/main_scene="res://World/main.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+Globals="*res://Player/Globals.gd"
+
 [display]
 
 window/size/width=256
