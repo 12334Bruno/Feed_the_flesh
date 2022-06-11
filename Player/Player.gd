@@ -32,8 +32,8 @@ func _unhandled_input(event):
 		
 		if held_item:
 			var snapped_position = Vector2()
-			snapped_position.x = stepify(global_position.x - TILE_SIZE/2, TILE_SIZE) + TILE_SIZE
-			snapped_position.y = stepify(global_position.y - TILE_SIZE/2, TILE_SIZE) + TILE_SIZE
+			snapped_position.x = stepify(global_position.x - TILE_SIZE/2, TILE_SIZE) + TILE_SIZE/2
+			snapped_position.y = stepify(global_position.y - TILE_SIZE/2, TILE_SIZE) + TILE_SIZE/2
 			
 			held_item.global_position = snapped_position
 			
