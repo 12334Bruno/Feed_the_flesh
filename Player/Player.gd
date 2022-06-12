@@ -16,7 +16,7 @@ var on_item = null
 var TILE_SIZE = 16
 
 # Load scenes
-onready var Main = get_parent()
+onready var Main = get_parent().get_parent()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
 
 func _physics_process(delta):
@@ -47,7 +47,6 @@ func _unhandled_input(event):
 			
 		elif len(items) > 0:
 			# Check if item is interactable
-			print(items)
 			if items[0].interactable:
 				
 				if Input.is_action_just_pressed("ui_take_one_item"):
@@ -87,19 +86,19 @@ func highlight():
 	var player_grid_pos = Grass.world_to_map(global_position)
 	var items = Main.world_tiles[player_grid_pos.y][player_grid_pos.x]
 	# Set highlight if player is on interactable item 
-#	if len(items) > 0:
-#
-#		# Check if item is interactable
-#		if items[0].interactable:
-#
-#			# Remove highlight from old item and add to new
-#			if on_item != items[0] and on_item != null:
-#				on_item.get_node("Sprite").material.set_shader_param("width", 0.0)
-#			on_item = items[0]
-#			items[0].get_node("Sprite").material.set_shader_param("width", 1.0)
-#
-#	elif on_item != null:
-#		# Turn of highlight if the player isn't on a item
-#		on_item.get_node("Sprite").material.set_shader_param("width", 0.0)
-#		on_item = null
+	if len(items) > 0:
+
+		# Check if item is interactable
+		if items[0].interactable:
+
+			# Remove highlight from old item and add to new
+			if on_item != items[0] and on_item != null:
+				on_item.material.set_shader_param("width", 0.0)
+			on_item = items[0]
+			items[0].material.set_shader_param("width", 1.0)
+
+	elif on_item != null:
+		# Turn of highlight if the player isn't on a item
+		on_item.material.set_shader_param("width", 0.0)
+		on_item = null
 
