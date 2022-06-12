@@ -16,8 +16,11 @@ var on_item = null
 var TILE_SIZE = 16
 
 # Load scenes
-onready var Main = get_parent()
+onready var Main = get_parent().get_parent()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
+
+func _ready():
+	set_position(Vector2(192,144))
 
 func _physics_process(delta):
 	highlight()
