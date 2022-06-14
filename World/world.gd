@@ -5,6 +5,8 @@ var world_width = 44
 var world_height = 22
 var world_tiles = []
 var wall_tiles = []
+var walls_to_dump = []
+var dump_timer = Timer.new()
 
 # Ids
 var resource_ids = {
@@ -29,6 +31,12 @@ func _ready():
 	# Setup 
 	get_node("YSort").add_child(Walls)
 	add_child(Grass)
+	# Create timer for dumping inside walls
+	dump_timer.connect("timeout", self, "wall_dump")
+	dump_timer.set_wait_time(2)
+	dump_timer.set_one_shot(false)
+	add_child(dump_timer)
+	dump_timer.start()
 	# Save world tiles and wall tiles into array 
 	for _i in range(world_height):
 		var row = []
@@ -37,11 +45,9 @@ func _ready():
 			spawn_instance("grass", Vector2(_j,_i), 0)
 		for layer in world_layers.keys():
 			world_layers[layer].append(row.duplicate(true))
-		
+			
 		row.append(false)
 		wall_tiles.append(row.duplicate(true))
-		
-			
 	var zero_pos = Vector2(8,3)
 	for i in range(7):
 		var start = 0
@@ -72,8 +78,23 @@ func _ready():
 			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= 8:
 				# Spawn and add to wall_tiles
 				spawn_instance("wall", tile_pos, 0)
+				spawn_instance("grass", tile_pos, 1)
 				
-	
+func wall_dump():
+	# Sometimes wall doesn't get dumped every cycle, need to fix
+	if len(walls_to_dump) > 0:
+		var wall_pos = walls_to_dump[0]
+		for i in range(3):
+			for j in range(3):
+				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
+				if (!(wall_tiles[tile_pos.y][tile_pos.x]) and
+				Grass.get_cellv(tile_pos) != 1):
+					spawn_instance("wall", tile_pos, 0)
+					spawn_instance("grass", tile_pos, 1)
+					wall_tiles[wall_pos.y][wall_pos.x] = true
+		spawn_instance("wall", wall_pos, -1)
+		wall_tiles[wall_pos.y][wall_pos.x] = false
+		walls_to_dump.remove(0)
 	
 func spawn_instance(instance_id, pos, tilemap_id = false):
 	if instance_id in resource_ids.keys():
