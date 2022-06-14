@@ -90,6 +90,14 @@ func spawn_instance(instance_id, pos, tilemap_id = false):
 		add_child(spawned_instance)
 	elif instance_id == "wall":
 		Walls.set_cellv(pos, tilemap_id)
-		wall_tiles[pos.y][pos.x] = true
+		var wall_attributes = {
+			"level" : 0,
+			"current_food" : 0,
+			"food_to_next_lvl" : 1
+		}
+		if tilemap_id != -1:
+			wall_tiles[pos.y][pos.x] = true
+		else:
+			wall_tiles[pos.y][pos.x] = false
 	elif instance_id == "grass":
 		Grass.set_cellv(pos, tilemap_id)
