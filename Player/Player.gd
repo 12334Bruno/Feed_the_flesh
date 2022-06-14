@@ -32,32 +32,33 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_interact"):
 		
 		var player_grid_pos = Main.Grass.world_to_map(global_position)
-		var items = Main.world_tiles[player_grid_pos.y][player_grid_pos.x]
+		var items = Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x]
 		
 		# Snap released item to grid
 		
 		if held_items:
 			
-			if (len(items) > 0 and items[0].item_name == held_items[0].item_name) or len(items) == 0:
+			if ((len(items) > 0 and items[0].item_name == held_items[0].item_name) or len(items) == 0):
 					for item in held_items:
-						Main.world_tiles[player_grid_pos.y][player_grid_pos.x].append(item)
+						Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].append(item)
 						item.global_position = player_grid_pos * TILE_SIZE
 						item.visible = true
+						item.picked_up = false
 					held_items = []
 			
 		elif len(items) > 0:
 			# Check if item is interactable
-			if items[0].interactable:
+			if items[0].get("interactable"):
 				
 				if Input.is_action_just_pressed("ui_take_one_item"):
 					held_items.append(items[0])
-					Main.world_tiles[player_grid_pos.y][player_grid_pos.x].erase(items[0])
+					Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].erase(items[0])
 				else:
 					held_items = [] + items
 					for i in items:
 						i.visible = false
 					items[0].visible = true
-					Main.world_tiles[player_grid_pos.y][player_grid_pos.x].clear()
+					Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].clear()
 		else:
 			wall_interact(player_grid_pos)
 
@@ -132,7 +133,7 @@ func update_player_movement(delta):
 # Highlight 
 func highlight():
 	var player_grid_pos = Main.Grass.world_to_map(global_position)
-	var items = Main.world_tiles[player_grid_pos.y][player_grid_pos.x]
+	var items = Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x]
 	# Set highlight if player is on interactable item 
 	if len(items) > 0:
 		# Check if item is interactable
