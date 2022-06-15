@@ -64,7 +64,7 @@ func _ready():
 	spawn_instance("berry", Vector2(9,5))
 	spawn_instance("berry", Vector2(10,4))
 	spawn_instance("stone", Vector2(2,4))
-	spawn_instance("berry_bush", Vector2(2,2))
+	spawn_instance("berry_bush", Vector2(11,6))
 	# Spawn walls
 	zero_pos = Vector2(7,2)
 	for i in range(9):
@@ -77,7 +77,8 @@ func _ready():
 			var tile_pos = Vector2(zero_pos.x+j, zero_pos.y+i)
 			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= 8:
 				# Spawn and add to wall_tiles
-				spawn_instance("wall", tile_pos, 0)
+				spawn_instance("wall", tile_pos, 1)
+				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
 				spawn_instance("grass", tile_pos, 1)
 				
 func wall_dump():
@@ -89,10 +90,12 @@ func wall_dump():
 				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
 				if (!(wall_tiles[tile_pos.y][tile_pos.x]) and
 				Grass.get_cellv(tile_pos) != 1):
-					spawn_instance("wall", tile_pos, 0)
+					spawn_instance("wall", tile_pos, 1)
+					Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
 					spawn_instance("grass", tile_pos, 1)
 					wall_tiles[wall_pos.y][wall_pos.x] = true
 		spawn_instance("wall", wall_pos, -1)
+		Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
 		wall_tiles[wall_pos.y][wall_pos.x] = false
 		walls_to_dump.remove(0)
 	

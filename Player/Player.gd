@@ -92,11 +92,13 @@ func wall_interact(player_grid_pos):
 				player_grid_pos != tile_pos and 
 				Main.Grass.get_cellv(tile_pos) != 1):
 					new_walls_pos.append(tile_pos)
-					Main.spawn_instance("wall", tile_pos, 0)
+					Main.spawn_instance("wall", tile_pos, 1)
+					Main.Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
 					Main.spawn_instance("grass", tile_pos, 1)
 					Main.wall_tiles[wall_pos.y][wall_pos.x] = true
 		# Replace old wall
 		Main.spawn_instance("wall", wall_pos, -1)
+		Main.Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
 		Main.wall_tiles[wall_pos.y][wall_pos.x] = false
 		find_inside_walls(new_walls_pos)
 
