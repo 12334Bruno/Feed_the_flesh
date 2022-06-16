@@ -35,11 +35,9 @@ func _unhandled_input(event):
 		
 		var player_grid_pos = Main.Grass.world_to_map(global_position)
 		var items = Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x]
-		
-		# Snap released item to grid
-		
-		if held_items:
-			
+		# Wall interaction has priority
+		if !wall_interact(player_grid_pos) and held_items:
+			# Snap released item to grid
 			if ((len(items) > 0 and items[0].item_name == held_items[0].item_name) or len(items) == 0):
 					for item in held_items:
 						Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].append(item)
@@ -61,8 +59,6 @@ func _unhandled_input(event):
 						i.visible = false
 					items[0].visible = true
 					Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].clear()
-		else:
-			wall_interact(player_grid_pos)
 
 func take_player_input():
 	# Take player direction input
@@ -84,51 +80,17 @@ func wall_interact(player_grid_pos):
 	player_grid_pos = Main.Grass.world_to_map(global_position+Vector2(0,-TILE_SIZE/2))
 	var wall_pos = Vector2(player_grid_pos.x+round(last_direction.x), player_grid_pos.y+round(last_direction.y))
 	var wall = Main.wall_tiles[wall_pos.y][wall_pos.x]
-	var new_walls_pos = []
-	if wall and (last_direction.x == 0 or last_direction.y == 0):
-		# Create new walls
-		for i in range(3):
-			for j in range(3):
-				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if (!(Main.wall_tiles[tile_pos.y][tile_pos.x]) and 
-				player_grid_pos != tile_pos and 
-				Main.Grass.get_cellv(tile_pos) != 1):
-					new_walls_pos.append(tile_pos)
-					Main.spawn_instance("wall", tile_pos, 1)
-					Main.Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
-					Main.spawn_instance("grass", tile_pos, 1)
-					Main.wall_tiles[wall_pos.y][wall_pos.x] = true
-		# Replace old wall
-		Main.spawn_instance("wall", wall_pos, -1)
-		Main.Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
-		Main.wall_tiles[wall_pos.y][wall_pos.x] = false
-		find_inside_walls(new_walls_pos)
-
-func find_inside_walls(new_walls_pos):
-	var walls_to_check = []
-	for wall_pos in new_walls_pos:
-		for i in range(3):
-			for j in range(3):
-				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if Main.wall_tiles[tile_pos.y][tile_pos.x]:
-					walls_to_check.append(tile_pos)
-	var walls_to_dump = []
-	for wall_pos in walls_to_check:
-		var corrupt_surroundings = 0
-		for i in range(3):
-			for j in range(3):
-				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if tile_pos != wall_pos and Main.Grass.get_cellv(tile_pos) == 1:
-					corrupt_surroundings += 1
-		if corrupt_surroundings == 8 and !walls_to_dump.has(wall_pos):
-			walls_to_dump.append(wall_pos)
-	for wall in walls_to_dump:
-		Main.walls_to_dump.append(wall)
-	check_for_wall_cycle(walls_to_dump)
-	
-func check_for_wall_cycle(walls_to_dump):
-	var all_wall_pos = Main.Walls.get_used_cells()
-
+	if wall and (last_direction.x == 0 or last_direction.y == 0) and held_items:
+		# Check if enough berries to next wall spread
+		if held_items[0].item_name == "berry" and  len(held_items) >= wall["food_to_next_lvl"]:
+			for i in range(wall["food_to_next_lvl"]):
+				held_items[0].queue_free()
+				held_items.remove(0)
+			if held_items:
+				held_items[0].visible = true
+			Main.build_wall(wall_pos, player_grid_pos)
+			return true
+	return false
 
 func update_player_movement(delta):
 	velocity = direction * SPEED

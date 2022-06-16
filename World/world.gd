@@ -7,6 +7,7 @@ var world_tiles = []
 var wall_tiles = []
 var walls_to_dump = []
 var dump_timer = Timer.new()
+var wall_levels = [1,2,3,4,5]
 
 # Ids
 var resource_ids = {
@@ -90,23 +91,58 @@ func _ready():
 				
 func wall_dump():
 	# Sometimes wall doesn't get dumped every cycle, need to fix
-	if len(walls_to_dump) > 0:
+	var wall_dumped = false
+	while len(walls_to_dump) > 0 and !wall_dumped:
 		var wall_pos = walls_to_dump[0]
+		walls_to_dump.remove(0)
+		if Walls.get_cellv(wall_pos) == 1:
+			spawn_instance("wall", wall_pos, -1)
+			Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
+			wall_tiles[wall_pos.y][wall_pos.x] = false
+			wall_dumped = true
+		
+func build_wall(wall_pos, player_grid_pos):
+	var new_walls_pos = []
+	# Create new walls
+	for i in range(3):
+		for j in range(3):
+			var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
+			if (!(wall_tiles[tile_pos.y][tile_pos.x]) and 
+			player_grid_pos != tile_pos and 
+			Grass.get_cellv(tile_pos) != 1):
+				new_walls_pos.append(tile_pos)
+				spawn_instance("wall", tile_pos, 1)
+				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
+				spawn_instance("grass", tile_pos, 1)
+				wall_tiles[wall_pos.y][wall_pos.x] = true
+	# Replace old wall
+	spawn_instance("wall", wall_pos, -1)
+	Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
+	wall_tiles[wall_pos.y][wall_pos.x] = false
+	find_dump_walls(new_walls_pos)
+	
+func find_dump_walls(new_walls_pos):
+	var walls_to_check = []
+	for wall_pos in new_walls_pos:
 		for i in range(3):
 			for j in range(3):
 				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if (!(wall_tiles[tile_pos.y][tile_pos.x]) and
-				Grass.get_cellv(tile_pos) != 1):
-					spawn_instance("wall", tile_pos, 1)
-					Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
-					spawn_instance("grass", tile_pos, 1)
-					wall_tiles[wall_pos.y][wall_pos.x] = true
-		spawn_instance("wall", wall_pos, -1)
-		Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
-		wall_tiles[wall_pos.y][wall_pos.x] = false
-		walls_to_dump.remove(0)
+				if wall_tiles[tile_pos.y][tile_pos.x]:
+					walls_to_check.append(tile_pos)
+	var new_walls_to_dump = []
+	for wall_pos in walls_to_check:
+		var corrupt_surroundings = 0
+		for i in range(3):
+			for j in range(3):
+				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
+				if tile_pos != wall_pos and Grass.get_cellv(tile_pos) == 1:
+					corrupt_surroundings += 1
+		if corrupt_surroundings == 8 and !walls_to_dump.has(wall_pos):
+			new_walls_to_dump.append(wall_pos)
+	for wall in new_walls_to_dump:
+		walls_to_dump.append(wall)
 	
-func spawn_instance(instance_id, pos, tilemap_id = false):
+func spawn_instance(instance_id, pos, tilemap_id = false, wall_level = 0):
 	if instance_id in resource_ids.keys():
 		var spawned_instance = resource_ids[instance_id].instance()
 		spawned_instance.set_position(Grass.map_to_world(pos))
@@ -122,12 +158,12 @@ func spawn_instance(instance_id, pos, tilemap_id = false):
 	elif instance_id == "wall":
 		Walls.set_cellv(pos, tilemap_id)
 		var wall_attributes = {
-			"level" : 0,
+			"level" : wall_level,
 			"current_food" : 0,
-			"food_to_next_lvl" : 1
+			"food_to_next_lvl" : wall_levels[wall_level]
 		}
 		if tilemap_id != -1:
-			wall_tiles[pos.y][pos.x] = true
+			wall_tiles[pos.y][pos.x] = wall_attributes
 		else:
 			wall_tiles[pos.y][pos.x] = false
 	elif instance_id == "grass":
