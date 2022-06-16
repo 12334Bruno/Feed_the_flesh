@@ -11,12 +11,14 @@ var velocity = Vector2.ZERO
 # Items
 var held_items = []
 var on_item = null
+var on_wall = null
 
 # World constatns
 var TILE_SIZE = 16
 
 # Load scenes
 onready var Main = get_parent().get_parent()
+
 #onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
 
 func _physics_process(delta):
@@ -151,4 +153,18 @@ func highlight():
 		# Turn of highlight if the player isn't on a item
 		on_item.material.set_shader_param("width", 0.0)
 		on_item = null
+	else:
+		player_grid_pos = Main.Grass.world_to_map(global_position+Vector2(0,-TILE_SIZE/2))
+		var wall_pos = Vector2(player_grid_pos.x+round(last_direction.x), player_grid_pos.y+round(last_direction.y))
+		var wall = Main.wall_tiles[wall_pos.y][wall_pos.x]
+		if wall and (last_direction.x == 0 or last_direction.y == 0):
+			on_wall = true
+		else:
+			on_wall = false
+		if on_wall:
+			Main.WallProgressBar.set_position(Main.Grass.map_to_world(wall_pos)) 
+			Main.WallProgressBar.visible = true
+		else:
+			Main.WallProgressBar.visible = false
+			pass
 

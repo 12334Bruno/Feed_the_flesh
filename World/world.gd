@@ -26,11 +26,13 @@ var world_layers = {
 # Grass will need to be added manualy eventually
 onready var Walls = preload("res://World/Walls.tscn").instance()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
+onready var WallProgressBar = preload("res://WallProgressBar/WallProgressBar.tscn").instance()
 
 func _ready():
 	# Setup 
 	get_node("YSort").add_child(Walls)
 	add_child(Grass)
+	add_child(WallProgressBar)
 	# Create timer for dumping inside walls
 	dump_timer.connect("timeout", self, "wall_dump")
 	dump_timer.set_wait_time(2)
@@ -42,40 +44,45 @@ func _ready():
 		var row = []
 		for _j in range(world_width):
 			row.append([]) 
+			# Spawn normal grass
 			spawn_instance("grass", Vector2(_j,_i), 0)
 		for layer in world_layers.keys():
 			world_layers[layer].append(row.duplicate(true))
-			
 		row.append(false)
 		wall_tiles.append(row.duplicate(true))
+	# Spawn corrupt grass
 	var zero_pos = Vector2(8,3)
-	for i in range(7):
+	var circ = 9 # Circumference of corrupt area
+	for i in range(circ):
 		var start = 0
 		var end = 0
-		if i <= 3:
-			start = 3 - i
-			end = 4 + i
+		if i <= circ / 2:
+			start = circ / 2 - i
+			end = ceil(float(circ)/2) + i
 		else:
-			start = i - 3
-			end = 12 - i
+			start = i - circ / 2
+			end = ceil(float(circ)/2) + circ + 1 - i
 		for j in range(start, end):
 			spawn_instance("grass", Vector2(zero_pos.x+j, zero_pos.y+i), 1)
 	# Spawn objects
-	spawn_instance("berry", Vector2(9,5))
-	spawn_instance("berry", Vector2(10,4))
+	spawn_instance("berry", Vector2(10,5))
+	spawn_instance("berry", Vector2(11,4))
 	spawn_instance("stone", Vector2(2,4))
-	spawn_instance("berry_bush", Vector2(11,6))
+	spawn_instance("berry_bush", Vector2(12,7))
 	# Spawn walls
-	zero_pos = Vector2(7,2)
-	for i in range(9):
+	zero_pos -= Vector2(1,1)
+	circ += 2
+	for i in range(circ):
 		var placement = []
-		if i <= 4:
-			placement = [4-i,4-i-1,4+i,4+i+1]
+		if i <= circ / 2:
+			placement = [circ / 2 - i,circ / 2 - i - 1, 
+						 circ / 2 + i,circ / 2 + i + 1]
 		else:
-			placement = [i-5,i-4,13-i,12-i]
+			placement = [i - ceil(float(circ)/2), i - circ/2,
+						 circ + circ / 2 - i, circ + circ / 2 - 1 - i]
 		for j in placement:
 			var tile_pos = Vector2(zero_pos.x+j, zero_pos.y+i)
-			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= 8:
+			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= circ - 1:
 				# Spawn and add to wall_tiles
 				spawn_instance("wall", tile_pos, 1)
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
