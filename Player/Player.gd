@@ -57,6 +57,7 @@ func _unhandled_input(event):
 					held_items = [] + items
 					for i in items:
 						i.visible = false
+						i.picked_up = true
 					items[0].visible = true
 					Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].clear()
 
@@ -82,14 +83,21 @@ func wall_interact(player_grid_pos):
 	var wall = Main.wall_tiles[wall_pos.y][wall_pos.x]
 	if wall and (last_direction.x == 0 or last_direction.y == 0) and held_items:
 		# Check if enough berries to next wall spread
-		if held_items[0].item_name == "berry" and  len(held_items) >= wall["food_to_next_lvl"]:
-			for i in range(wall["food_to_next_lvl"]):
-				held_items[0].queue_free()
-				held_items.remove(0)
-			if held_items:
-				held_items[0].visible = true
-			Main.build_wall(wall_pos, player_grid_pos)
-			return true
+		if held_items[0].item_name == "berry":
+			if len(held_items) >= wall["food_to_next_lvl"] - wall["current_food"]:
+				for i in range(wall["food_to_next_lvl"] - wall["current_food"]):
+					held_items[0].queue_free()
+					held_items.remove(0)
+				if held_items:
+					held_items[0].visible = true
+				Main.build_wall(wall_pos, player_grid_pos)
+			else:
+				Main.wall_tiles[wall_pos.y][wall_pos.x]["current_food"] += len(held_items)
+				for i in range(len(held_items)):
+					held_items[0].queue_free()
+					held_items.remove(0)
+				Main.update_wall_progress(wall_pos)
+		return true
 	return false
 
 func update_player_movement(delta):
@@ -126,7 +134,6 @@ func highlight():
 		if on_wall:
 			Main.WallProgressBar.set_position(Main.Grass.map_to_world(wall_pos)) 
 			Main.WallProgressBar.visible = true
+			Main.update_wall_progress(wall_pos)
 		else:
 			Main.WallProgressBar.visible = false
-			pass
-
