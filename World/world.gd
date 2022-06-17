@@ -3,11 +3,16 @@ extends Node2D
 # World size
 var world_width = 44
 var world_height = 22
+
 var world_tiles = []
 var wall_tiles = []
 var walls_to_dump = []
+
 var dump_timer = Timer.new()
-var wall_levels = [1,2,3,4,5]
+var wall_levels = [1,2,3,4,5] 
+
+var circ = 9 # Circumference of corrupt area
+var center_pos = Vector2(world_width/2, world_height/2) # Center of corrupt area
 
 # Ids
 var resource_ids = {
@@ -52,8 +57,8 @@ func _ready():
 		row.append(false)
 		wall_tiles.append(row.duplicate(true))
 	# Spawn corrupt grass
-	var zero_pos = Vector2(8,3)
-	var circ = 9 # Circumference of corrupt area
+	var zero_pos = center_pos - Vector2(circ/2,circ/2)
+	
 	for i in range(circ):
 		var start = 0
 		var end = 0
@@ -66,10 +71,10 @@ func _ready():
 		for j in range(start, end):
 			spawn_instance("grass", Vector2(zero_pos.x+j, zero_pos.y+i), 1)
 	# Spawn objects
-	spawn_instance("berry", Vector2(10,5))
-	spawn_instance("berry", Vector2(11,4))
-	spawn_instance("stone", Vector2(2,4))
-	spawn_instance("berry_bush", Vector2(12,7))
+	spawn_instance("berry", Vector2(20,10))
+	spawn_instance("berry", Vector2(21,11))
+	spawn_instance("stone", Vector2(15,8))
+	spawn_instance("berry_bush", center_pos)
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
 	circ += 2
@@ -111,8 +116,9 @@ func build_wall(wall_pos, player_grid_pos):
 			player_grid_pos != tile_pos and 
 			Grass.get_cellv(tile_pos) != 1):
 				new_walls_pos.append(tile_pos)
-				spawn_instance("wall", tile_pos, 1)
-				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
+				spawn_instance("wall", tile_pos, 1, wall_level(tile_pos))
+				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),
+											Vector2(tile_pos.x+1,tile_pos.y+1))
 				spawn_instance("grass", tile_pos, 1)
 				wall_tiles[wall_pos.y][wall_pos.x] = true
 	# Replace old wall
@@ -120,6 +126,24 @@ func build_wall(wall_pos, player_grid_pos):
 	Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
 	wall_tiles[wall_pos.y][wall_pos.x] = false
 	find_dump_walls(new_walls_pos)
+	
+func update_wall_progress(wall_pos):
+	var wall = wall_tiles[wall_pos.y][wall_pos.x]
+	WallProgressBar.get_node("TextureProgress").value = (float(wall["current_food"])/
+														 float(wall["food_to_next_lvl"]))*100
+	
+func wall_level(wall_pos):
+	var distance = sqrt(pow(center_pos.x - wall_pos.x, 2) + pow(center_pos.y - wall_pos.y, 2))
+	if distance <= 5:
+		return 0
+	elif distance <= 8:
+		return 1
+	elif distance <= 11:
+		return 2
+	elif distance <= 14:
+		return 3
+	else:
+		return 4
 	
 func find_dump_walls(new_walls_pos):
 	var walls_to_check = []
