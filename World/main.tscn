@@ -9,5 +9,5 @@ script = ExtResource( 4 )
 [node name="YSort" type="YSort" parent="."]
 
 [node name="Player" parent="YSort" instance=ExtResource( 1 )]
-position = Vector2( 192, 128 )
+position = Vector2( 306, 181 )
 collision_mask = 0
