@@ -74,6 +74,8 @@ func _ready():
 	# Spawn objects
 	spawn_instance("berry", Vector2(20,10))
 	spawn_instance("berry", Vector2(21,11))
+	spawn_instance("berry", Vector2(22,12))
+	spawn_instance("berry", Vector2(23,11))
 	spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos)
 	# Spawn walls
