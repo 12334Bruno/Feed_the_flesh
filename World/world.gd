@@ -4,8 +4,7 @@ extends Node2D
 var world_width = 44
 var world_height = 22
 
-var world_tiles = []
-var wall_tiles = []
+var world_tiles = [] # Do we ever use this?
 var walls_to_dump = []
 
 var dump_timer = Timer.new()
@@ -27,6 +26,7 @@ var resource_maker_ids = {
 var world_layers = {
 	"resources": [],
 	"resource_makers": [],
+	"flesh_wall": [],
 }
 
 # Grass will need to be added manualy eventually
@@ -53,9 +53,10 @@ func _ready():
 			# Spawn normal grass
 			spawn_instance("grass", Vector2(_j,_i), 0)
 		for layer in world_layers.keys():
+			if layer == "flesh_wall":
+				row.append(false)
 			world_layers[layer].append(row.duplicate(true))
-		row.append(false)
-		wall_tiles.append(row.duplicate(true))
+			
 	# Spawn corrupt grass
 	var zero_pos = center_pos - Vector2(circ/2,circ/2)
 	
@@ -73,7 +74,7 @@ func _ready():
 	# Spawn objects
 	spawn_instance("berry", Vector2(20,10))
 	spawn_instance("berry", Vector2(21,11))
-	spawn_instance("stone", Vector2(15,8))
+	spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos)
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
@@ -103,7 +104,7 @@ func wall_dump():
 		if Walls.get_cellv(wall_pos) == 1:
 			spawn_instance("wall", wall_pos, -1)
 			Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
-			wall_tiles[wall_pos.y][wall_pos.x] = false
+			world_layers["flesh_wall"][wall_pos.y][wall_pos.x] = false
 			wall_dumped = true
 		
 func build_wall(wall_pos, player_grid_pos):
@@ -112,7 +113,7 @@ func build_wall(wall_pos, player_grid_pos):
 	for i in range(3):
 		for j in range(3):
 			var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-			if (!(wall_tiles[tile_pos.y][tile_pos.x]) and 
+			if (!(world_layers["flesh_wall"][tile_pos.y][tile_pos.x]) and 
 			player_grid_pos != tile_pos and 
 			Grass.get_cellv(tile_pos) != 1):
 				new_walls_pos.append(tile_pos)
@@ -120,15 +121,15 @@ func build_wall(wall_pos, player_grid_pos):
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),
 											Vector2(tile_pos.x+1,tile_pos.y+1))
 				spawn_instance("grass", tile_pos, 1)
-				wall_tiles[wall_pos.y][wall_pos.x] = true
+				world_layers["flesh_wall"][wall_pos.y][wall_pos.x] = true
 	# Replace old wall
 	spawn_instance("wall", wall_pos, -1)
 	Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
-	wall_tiles[wall_pos.y][wall_pos.x] = false
+	world_layers["flesh_wall"][wall_pos.y][wall_pos.x] = false
 	find_dump_walls(new_walls_pos)
 	
 func update_wall_progress(wall_pos):
-	var wall = wall_tiles[wall_pos.y][wall_pos.x]
+	var wall = world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
 	WallProgressBar.get_node("TextureProgress").value = (float(wall["current_food"])/
 														 float(wall["food_to_next_lvl"]))*100
 	
@@ -151,7 +152,7 @@ func find_dump_walls(new_walls_pos):
 		for i in range(3):
 			for j in range(3):
 				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if wall_tiles[tile_pos.y][tile_pos.x]:
+				if world_layers["flesh_wall"][tile_pos.y][tile_pos.x]:
 					walls_to_check.append(tile_pos)
 	var new_walls_to_dump = []
 	for wall_pos in walls_to_check:
@@ -187,8 +188,8 @@ func spawn_instance(instance_id, pos, tilemap_id = false, wall_level = 0):
 			"food_to_next_lvl" : wall_levels[wall_level]
 		}
 		if tilemap_id != -1:
-			wall_tiles[pos.y][pos.x] = wall_attributes
+			world_layers["flesh_wall"][pos.y][pos.x] = wall_attributes
 		else:
-			wall_tiles[pos.y][pos.x] = false
+			world_layers["flesh_wall"][pos.y][pos.x] = false
 	elif instance_id == "grass":
 		Grass.set_cellv(pos, tilemap_id)

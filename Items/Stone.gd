@@ -1,7 +1,6 @@
 extends Sprite
 
 # Information about item
-var interactable = true
 var item_name = "stone"
 var picked_up = false setget picked_up
 
