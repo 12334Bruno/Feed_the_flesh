@@ -18,7 +18,9 @@ func picked_up(value):
 	else:
 		text_label.visible = true
 	var grid_pos = Main.Grass.world_to_map(global_position)
-	text_label.text = str(len(Main.world_layers["resources"][grid_pos.y][grid_pos.x])) 
+	var text = str(len(Main.world_layers["resources"][grid_pos.y][grid_pos.x])) 
+	for berry in Main.world_layers["resources"][grid_pos.y][grid_pos.x]:
+		berry.text_label.text = text
 	picked_up = value
 
 

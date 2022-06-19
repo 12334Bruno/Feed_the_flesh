@@ -68,13 +68,15 @@ func _unhandled_input(event):
 		elif can_take():
 			if Input.is_action_just_pressed("ui_take_one_item"):
 				held_items.append(items[0])
-				Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].erase(items[0])
+				Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].erase(held_items[0])
+				held_items[0].picked_up = true
+				held_items[0].visible = true
 			else:
 				held_items = [] + items
-				for i in items:
+				for i in held_items:
 					i.visible = false
 					i.picked_up = true
-				items[0].visible = true
+				held_items[0].visible = true
 				Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].clear()
 			set_text()
 		
