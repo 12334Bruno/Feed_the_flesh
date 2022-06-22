@@ -90,7 +90,6 @@ func _unhandled_input(event):
 			state = STOPPED
 
 func harvesting(delta):
-	print("harvesting")
 	if Input.is_action_pressed("ui_interact"):
 		harvest_timer += delta
 	else:
@@ -115,7 +114,6 @@ func harvesting(delta):
 			time_to_harvest = 0
 			state = ACTIVE
 			harvesting = null
-			print("FULL")
 		
 
 func take_player_input():
