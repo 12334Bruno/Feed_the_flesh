@@ -1,5 +1,8 @@
 extends KinematicBody2D
 
+# World constatns
+var TILE_SIZE = 16
+
 # Movement constatns
 var SPEED = 90
 
@@ -13,19 +16,39 @@ var held_items = []
 var on_item = null
 var on_wall = null
 
-# World constatns
-var TILE_SIZE = 16
+# Harvesting
+var harvest_timer = 0
+var time_to_harvest = 2
+var harvesting = null
+
+# States
+enum {
+	ACTIVE,
+	STOPPED
+}
+var state = ACTIVE
 
 # Load scenes
 onready var Main = get_parent().get_parent()
+onready var Berry = preload("res://Items/Berries.tscn")
 
-#onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
+# Load nodes
+onready var text_label = $Control/Label
+
+
+func set_text():
+	text_label.text = str(len(held_items), "/3")
 
 func _physics_process(delta):
 	highlight()
-	take_player_input()
-	update_player_movement(delta)
-	interact()
+	
+	match state:
+		ACTIVE:
+			interact()
+			take_player_input()
+			update_player_movement(delta)
+		STOPPED:
+			harvesting(delta)
 
 
 func _unhandled_input(event):
@@ -35,31 +58,65 @@ func _unhandled_input(event):
 		
 		var player_grid_pos = Main.Grass.world_to_map(global_position)
 		var items = Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x]
+		
 		# Wall interaction has priority
-		if !wall_interact(player_grid_pos) and held_items:
-			# Snap released item to grid
-			if ((len(items) > 0 and items[0].item_name == held_items[0].item_name) or len(items) == 0):
-					for item in held_items:
-						Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].append(item)
-						item.global_position = player_grid_pos * TILE_SIZE
-						item.visible = true
-						item.picked_up = false
-					held_items = []
-			
-		elif len(items) > 0:
-			# Check if item is interactable
-			if items[0].get("interactable"):
+		if !wall_interact(player_grid_pos) and can_place():
+			for item in held_items:
+				Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].append(item)
+				item.global_position = player_grid_pos * TILE_SIZE
+				item.visible = true
+				item.picked_up = false
+				held_items[0].picked_up = false
+			held_items = []
+			set_text()
 				
-				if Input.is_action_just_pressed("ui_take_one_item"):
-					held_items.append(items[0])
-					Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].erase(items[0])
-				else:
-					held_items = [] + items
-					for i in items:
-						i.visible = false
-						i.picked_up = true
-					items[0].visible = true
-					Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].clear()
+		elif can_take():
+			if Input.is_action_just_pressed("ui_take_one_item"):
+				held_items.append(items[0])
+				Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].erase(held_items[0])
+				held_items[0].picked_up = true
+				held_items[0].visible = true
+			else:
+				held_items = [] + items
+				for i in held_items:
+					i.visible = false
+					i.picked_up = true
+				held_items[0].visible = true
+				Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x].clear()
+			set_text()
+		elif can_harvest():
+			harvesting = Main.world_layers["resource_makers"][player_grid_pos.y][player_grid_pos.x][0]
+			time_to_harvest = harvesting.time_to_harvest
+			state = STOPPED
+
+func harvesting(delta):
+	print("harvesting")
+	if Input.is_action_pressed("ui_interact"):
+		harvest_timer += delta
+	else:
+		harvest_timer = 0
+		time_to_harvest = 0
+		state = ACTIVE
+		harvesting = null
+		
+	if harvest_timer > time_to_harvest:
+		var berry = harvesting.resource.instance()
+		Main.add_child(berry)
+		held_items.append(berry)
+		harvest_timer = 0
+		
+		# Only for visual queue
+		interact()
+		set_text()
+		berry.picked_up = true
+		
+		if len(held_items) >= 3:
+			harvest_timer = 0
+			time_to_harvest = 0
+			state = ACTIVE
+			harvesting = null
+			print("FULL")
+		
 
 func take_player_input():
 	# Take player direction input
@@ -73,30 +130,29 @@ func take_player_input():
 
 func interact():
 	if held_items:
-		held_items[0].global_position = Vector2(global_position.x, global_position.y -8) 
+		held_items[0].global_position = Vector2(global_position.x, global_position.y - 8)
 		
 func wall_interact(player_grid_pos):
 	# Check for walls in direction of last movement
 	# Change player position to center (leg hitbox doesn't work)
 	player_grid_pos = Main.Grass.world_to_map(global_position+Vector2(0,-TILE_SIZE/2))
 	var wall_pos = Vector2(player_grid_pos.x+round(last_direction.x), player_grid_pos.y+round(last_direction.y))
-	var wall = Main.wall_tiles[wall_pos.y][wall_pos.x]
-	if wall and (last_direction.x == 0 or last_direction.y == 0) and held_items:
-		# Check if enough berries to next wall spread
-		if held_items[0].item_name == "berry":
-			if len(held_items) >= wall["food_to_next_lvl"] - wall["current_food"]:
-				for i in range(wall["food_to_next_lvl"] - wall["current_food"]):
-					held_items[0].queue_free()
-					held_items.remove(0)
-				if held_items:
-					held_items[0].visible = true
-				Main.build_wall(wall_pos, player_grid_pos)
-			else:
-				Main.wall_tiles[wall_pos.y][wall_pos.x]["current_food"] += len(held_items)
-				for i in range(len(held_items)):
-					held_items[0].queue_free()
-					held_items.remove(0)
-				Main.update_wall_progress(wall_pos)
+	var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
+	if wall and (last_direction.x == 0 or last_direction.y == 0) and held_items and held_items[0].item_name == "berry":
+		if len(held_items) >= wall["food_to_next_lvl"] - wall["current_food"]:
+			for i in range(wall["food_to_next_lvl"] - wall["current_food"]):
+				held_items[0].queue_free()
+				held_items.remove(0)
+			if held_items:
+				held_items[0].visible = true
+			Main.build_wall(wall_pos, player_grid_pos)
+		else:
+			Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]["current_food"] += len(held_items)
+			for i in range(len(held_items)):
+				held_items[0].queue_free()
+				held_items.remove(0)
+			Main.update_wall_progress(wall_pos)
+		set_text()
 		return true
 	return false
 
@@ -108,6 +164,7 @@ func update_player_movement(delta):
 func highlight():
 	var player_grid_pos = Main.Grass.world_to_map(global_position)
 	var items = Main.world_layers["resources"][player_grid_pos.y][player_grid_pos.x]
+	items += Main.world_layers["resource_makers"][player_grid_pos.y][player_grid_pos.x]
 	# Set highlight if player is on interactable item 
 	if len(items) > 0:
 		# Check if item is interactable
@@ -126,7 +183,7 @@ func highlight():
 	else:
 		player_grid_pos = Main.Grass.world_to_map(global_position+Vector2(0,-TILE_SIZE/2))
 		var wall_pos = Vector2(player_grid_pos.x+round(last_direction.x), player_grid_pos.y+round(last_direction.y))
-		var wall = Main.wall_tiles[wall_pos.y][wall_pos.x]
+		var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
 		if wall and (last_direction.x == 0 or last_direction.y == 0):
 			on_wall = true
 		else:
@@ -137,3 +194,43 @@ func highlight():
 			Main.update_wall_progress(wall_pos)
 		else:
 			Main.WallProgressBar.visible = false
+
+func can_place():
+	var grid_pos = Main.Grass.world_to_map(global_position)
+	var tile_items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
+	# Player has to be holding an item to place something
+	if !held_items:
+		return false
+	
+	# Check items occupying the tile
+	if len(tile_items) > 0:
+		
+		# Check the items on ground match the held items
+		if tile_items[0].item_name != held_items[0].item_name:
+			return false 
+		if len(tile_items) + len(held_items) > 3:
+			return false
+	
+	# Check no resource makers are occupying the tile
+	if Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]:
+		return false
+	if Main.world_layers["flesh_wall"][grid_pos.y][grid_pos.x]:
+		return false
+	
+	return true
+
+func can_take():
+	var grid_pos = Main.Grass.world_to_map(global_position)
+	var tile_items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
+	if len(tile_items) <= 0 or held_items:
+		return false
+	return true
+
+func can_harvest():
+	var grid_pos = Main.Grass.world_to_map(global_position)
+	var resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
+	if len(resource_maker) <= 0:
+		return false
+	if held_items and resource_maker[0].resource_name != held_items[0].item_name:
+		return false
+	return true
