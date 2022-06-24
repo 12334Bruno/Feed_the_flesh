@@ -61,7 +61,7 @@ func _unhandled_input(event):
 		var items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
 		
 		# Wall interaction has priority
-		if !wall_interact(grid_pos) and can_place():
+		if !wall_interact() and can_place():
 			
 			if Input.is_action_just_pressed("ui_interact_one"):
 				stacking_items = false
@@ -149,10 +149,11 @@ func interact():
 				and len(held_items) < HOLDING_CAPACITY):
 				take_items(tile_items)
 			
-func wall_interact(grid_pos):
+func wall_interact():
 	# Check for walls in direction of last movement
 	# Change player position to center (leg hitbox doesn't work)
 	
+	print(grid_pos)
 	var wall_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
 	var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
 	if wall and (last_direction.x == 0 or last_direction.y == 0) and (held_items 
@@ -213,11 +214,11 @@ func highlight():
 		else:
 			on_wall = false
 		if on_wall:
-			Main.WallProgressBar.set_position(Main.Grass.map_to_world(wall_pos)) 
-			Main.WallProgressBar.visible = true
+			Main.ProgressBarIcon.set_position(Main.Grass.map_to_world(wall_pos)) 
+			Main.ProgressBarIcon.visible = true
 			Main.update_wall_progress(wall_pos)
 		else:
-			Main.WallProgressBar.visible = false
+			Main.ProgressBarIcon.visible = false
 
 # Fuction takes an array of items
 func take_items(items2):
