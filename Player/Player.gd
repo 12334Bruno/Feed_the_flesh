@@ -109,16 +109,26 @@ func harvesting(delta):
 	
 	# After a certain time harvest the material and add it to held_items
 	if harvest_timer > time_to_harvest:
-		var berry = harvesting.resource.instance()
-		Main.add_child(berry)
-		held_items.append(berry)
+		var resource = harvesting.resource.instance()
+		Main.add_child(resource)
+		held_items.append(resource)
 		harvest_timer = 0
+		if harvesting.uses == 1:
+			on_item = null
+			harvest_timer = 0
+			time_to_harvest = 0
+			state = ACTIVE
+			harvesting.uses -= 1
+		
+		if harvesting:
+			harvesting.uses -= 1
+		 
 		
 		# Only for visual queue
 		interact()
 		set_text()
 		
-		berry.picked_up = true
+		resource.picked_up = true
 		
 		# Stop harvesting if HOLDING_CAPACITY is full
 		if len(held_items) >= HOLDING_CAPACITY:
@@ -153,7 +163,6 @@ func wall_interact():
 	# Check for walls in direction of last movement
 	# Change player position to center (leg hitbox doesn't work)
 	
-	print(grid_pos)
 	var wall_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
 	var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
 	if wall and (last_direction.x == 0 or last_direction.y == 0) and (held_items 

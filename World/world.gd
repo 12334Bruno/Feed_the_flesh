@@ -19,7 +19,8 @@ var resource_ids = {
 	"stone": preload("res://Items/Stone.tscn")
 }
 var resource_maker_ids = {
-	"berry_bush": preload("res://Items/ItemGenerators/BerryBush.tscn")
+	"berry_bush": preload("res://Items/ItemGenerators/BerryBush.tscn"),
+	"stone_formation": preload("res://Items/ItemGenerators/StoneFormation.tscn")
 }
 
 # World Layers
@@ -32,13 +33,13 @@ var world_layers = {
 # Grass will need to be added manualy eventually
 onready var Walls = preload("res://World/Walls.tscn").instance()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
-onready var WallProgressBar = preload("res://WallProgressBar/WallProgressBar.tscn").instance()
+onready var ProgressBarIcon = preload("res://ProgressBarIcon/ProgressBarIcon.tscn").instance()
 
 func _ready():
 	# Setup 
 	get_node("YSort").add_child(Walls)
 	add_child(Grass)
-	add_child(WallProgressBar)
+	add_child(ProgressBarIcon)
 	# Create timer for dumping inside walls
 	dump_timer.connect("timeout", self, "wall_dump")
 	dump_timer.set_wait_time(2)
@@ -78,6 +79,7 @@ func _ready():
 	spawn_instance("berry", Vector2(23,11))
 	spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos)
+	spawn_instance("stone_formation", Vector2(18,11))
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
 	circ += 2
@@ -132,7 +134,7 @@ func build_wall(wall_pos, player_grid_pos):
 	
 func update_wall_progress(wall_pos):
 	var wall = world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
-	WallProgressBar.get_node("TextureProgress").value = (float(wall["current_food"])/
+	ProgressBarIcon.get_node("TextureProgress").value = (float(wall["current_food"])/
 														 float(wall["food_to_next_lvl"]))*100
 	
 func wall_level(wall_pos):
