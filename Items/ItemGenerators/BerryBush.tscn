@@ -26,3 +26,4 @@ material = SubResource( 2 )
 frames = SubResource( 1 )
 offset = Vector2( 8, 8 )
 script = ExtResource( 2 )
+time_to_harvest = 0.7

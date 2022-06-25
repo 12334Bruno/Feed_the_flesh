@@ -33,6 +33,8 @@ var state = ACTIVE
 # Load scenes
 onready var Main = get_parent().get_parent()
 onready var Berry = preload("res://Items/Berries.tscn")
+onready var PB = preload("res://ProgressBarIcon/ProgressBarIcon.tscn")
+var progress_bar = null
 
 # Load nodes
 onready var text_label = $Control/Label
@@ -93,36 +95,37 @@ func _unhandled_input(event):
 		elif can_harvest():
 			harvesting = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x][0]
 			time_to_harvest = harvesting.time_to_harvest
+			progress_bar = PB.instance()
+			add_child(progress_bar)
+			progress_bar.animation = "no_color"
+			progress_bar.global_position = global_position - Vector2(8, 25) # Offset for visuals
+			progress_bar.speed_scale /= time_to_harvest
+			progress_bar.playing = true
 			state = STOPPED
 
 # Harvest any material
 func harvesting(delta):
-	
+	var stop = false
 	# Keep harvesting while the interact button is pressed, else stop
 	if Input.is_action_pressed("ui_interact"):
 		harvest_timer += delta
 	else:
-		harvest_timer = 0
-		time_to_harvest = 0
-		state = ACTIVE
-		harvesting = null
+		stop = true
 	
 	# After a certain time harvest the material and add it to held_items
-	if harvest_timer > time_to_harvest:
+	if harvest_timer >= time_to_harvest:
 		var resource = harvesting.resource.instance()
 		Main.add_child(resource)
 		held_items.append(resource)
 		harvest_timer = 0
-		if harvesting.uses == 1:
-			on_item = null
-			harvest_timer = 0
-			time_to_harvest = 0
-			state = ACTIVE
-			harvesting.uses -= 1
+		
 		
 		if harvesting:
+				
+			if harvesting.uses == 1:
+				stop = true
+				on_item = null
 			harvesting.uses -= 1
-		 
 		
 		# Only for visual queue
 		interact()
@@ -132,11 +135,14 @@ func harvesting(delta):
 		
 		# Stop harvesting if HOLDING_CAPACITY is full
 		if len(held_items) >= HOLDING_CAPACITY:
-			harvest_timer = 0
-			time_to_harvest = 0
-			state = ACTIVE
-			harvesting = null
-		
+			stop = true
+	
+	if stop:
+		harvest_timer = 0
+		time_to_harvest = 0
+		state = ACTIVE
+		harvesting = null
+		progress_bar.queue_free()
 
 func take_player_input():
 	# Take player direction input

@@ -36,6 +36,9 @@ onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
 onready var ProgressBarIcon = preload("res://ProgressBarIcon/ProgressBarIcon.tscn").instance()
 var PB_length = 15 # 15 frames
 
+# We should think of a way to show that a wall needs more berries for lvl up
+# meaning, the player doesn't invest in a wall, which he didn't know needed more berries than the last
+
 func _ready():
 	# Setup 
 	get_node("YSort").add_child(Walls)
@@ -108,7 +111,7 @@ func wall_dump():
 			Walls.update_bitmask_region(Vector2(wall_pos.x-1,wall_pos.y-1),Vector2(wall_pos.x+1,wall_pos.y+1))
 			world_layers["flesh_wall"][wall_pos.y][wall_pos.x] = false
 			wall_dumped = true
-		
+
 func build_wall(wall_pos, player_grid_pos):
 	var new_walls_pos = []
 	# Create new walls
