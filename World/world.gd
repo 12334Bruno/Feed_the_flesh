@@ -34,6 +34,7 @@ var world_layers = {
 onready var Walls = preload("res://World/Walls.tscn").instance()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
 onready var ProgressBarIcon = preload("res://ProgressBarIcon/ProgressBarIcon.tscn").instance()
+var PB_length = 15 # 15 frames
 
 func _ready():
 	# Setup 
@@ -73,13 +74,10 @@ func _ready():
 		for j in range(start, end):
 			spawn_instance("grass", Vector2(zero_pos.x+j, zero_pos.y+i), 1)
 	# Spawn objects
-	spawn_instance("berry", Vector2(20,10))
-	spawn_instance("berry", Vector2(21,11))
-	spawn_instance("berry", Vector2(22,12))
 	spawn_instance("berry", Vector2(23,11))
 	spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos)
-	spawn_instance("stone_formation", Vector2(18,11))
+	spawn_instance("stone_formation", Vector2(20,11))
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
 	circ += 2
@@ -134,8 +132,8 @@ func build_wall(wall_pos, player_grid_pos):
 	
 func update_wall_progress(wall_pos):
 	var wall = world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
-	ProgressBarIcon.get_node("TextureProgress").value = (float(wall["current_food"])/
-														 float(wall["food_to_next_lvl"]))*100
+	var progress = round(float(wall["current_food"])/float(wall["food_to_next_lvl"]) * PB_length) - 1 
+	ProgressBarIcon.set_frame(progress)
 	
 func wall_level(wall_pos):
 	var distance = sqrt(pow(center_pos.x - wall_pos.x, 2) + pow(center_pos.y - wall_pos.y, 2))
