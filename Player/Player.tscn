@@ -37,9 +37,9 @@ z_as_relative = false
 
 [node name="Label" type="Label" parent="Control"]
 margin_left = -20.0
-margin_top = -26.0
+margin_top = -30.0
 margin_right = 20.0
-margin_bottom = -7.0
+margin_bottom = -11.0
 theme = SubResource( 2 )
 text = "0/3"
 align = 1
