@@ -33,6 +33,7 @@ var world_layers = {
 # Grass will need to be added manualy eventually
 onready var Walls = preload("res://World/Walls.tscn").instance()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
+onready var Corrupt_Grass = preload("res://World/Environment/Corrupt_Grass.tscn").instance()
 onready var ProgressBarIcon = preload("res://ProgressBarIcon/ProgressBarIcon.tscn").instance()
 var PB_length = 15 # 15 frames
 
@@ -43,6 +44,7 @@ func _ready():
 	# Setup 
 	get_node("YSort").add_child(Walls)
 	add_child(Grass)
+	add_child(Corrupt_Grass)
 	add_child(ProgressBarIcon)
 	# Create timer for dumping inside walls
 	dump_timer.connect("timeout", self, "wall_dump")
@@ -75,7 +77,7 @@ func _ready():
 			start = i - circ / 2
 			end = ceil(float(circ)/2) + circ + 1 - i
 		for j in range(start, end):
-			spawn_instance("grass", Vector2(zero_pos.x+j, zero_pos.y+i), 1)
+			spawn_instance("corrupt_grass", Vector2(zero_pos.x+j, zero_pos.y+i), 0)
 	# Spawn objects
 	spawn_instance("berry", Vector2(23,11))
 	spawn_instance("stone", Vector2(22,9))
@@ -98,7 +100,7 @@ func _ready():
 				# Spawn and add to wall_tiles
 				spawn_instance("wall", tile_pos, 1)
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
-				spawn_instance("grass", tile_pos, 1)
+				spawn_instance("corrupt_grass", tile_pos, 0)
 				
 func wall_dump():
 	# Sometimes wall doesn't get dumped every cycle, need to fix
@@ -120,12 +122,12 @@ func build_wall(wall_pos, player_grid_pos):
 			var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
 			if (!(world_layers["flesh_wall"][tile_pos.y][tile_pos.x]) and 
 			player_grid_pos != tile_pos and 
-			Grass.get_cellv(tile_pos) != 1):
+			Corrupt_Grass.get_cellv(tile_pos) == -1):
 				new_walls_pos.append(tile_pos)
 				spawn_instance("wall", tile_pos, 1, wall_level(tile_pos))
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),
 											Vector2(tile_pos.x+1,tile_pos.y+1))
-				spawn_instance("grass", tile_pos, 1)
+				spawn_instance("corrupt_grass", tile_pos, 0)
 				world_layers["flesh_wall"][wall_pos.y][wall_pos.x] = true
 	# Replace old wall
 	spawn_instance("wall", wall_pos, -1)
@@ -165,7 +167,7 @@ func find_dump_walls(new_walls_pos):
 		for i in range(3):
 			for j in range(3):
 				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if tile_pos != wall_pos and Grass.get_cellv(tile_pos) == 1:
+				if tile_pos != wall_pos and Corrupt_Grass.get_cellv(tile_pos) != -1:
 					corrupt_surroundings += 1
 		if corrupt_surroundings == 8 and !walls_to_dump.has(wall_pos):
 			new_walls_to_dump.append(wall_pos)
@@ -198,3 +200,6 @@ func spawn_instance(instance_id, pos, tilemap_id = false, wall_level = 0):
 			world_layers["flesh_wall"][pos.y][pos.x] = false
 	elif instance_id == "grass":
 		Grass.set_cellv(pos, tilemap_id)
+	elif instance_id == "corrupt_grass":
+		Corrupt_Grass.set_cellv(pos, tilemap_id)
+		Corrupt_Grass.update_bitmask_region(pos)
