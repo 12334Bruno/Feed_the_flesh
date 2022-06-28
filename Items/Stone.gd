@@ -1,13 +1,14 @@
-extends Sprite
+extends Node2D
 
 # Information about item
 var interactable = true
 var item_name = "stone"
 var picked_up = false setget picked_up
+var self_offset = Vector2(8, 6)
 
 # Access to nodes
 onready var text_label = $Label
-onready var Main = get_parent()
+onready var Main = get_parent().get_parent()
 
 signal picked_up
 

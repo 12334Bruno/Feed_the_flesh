@@ -15,7 +15,7 @@ var center_pos = Vector2(world_width/2, world_height/2) # Center of corrupt area
 
 # Ids
 var resource_ids = {
-	"berry": preload("res://Items/Berries.tscn"),
+	"berry": preload("res://Items/Berry.tscn"),
 	"stone": preload("res://Items/Stone.tscn")
 }
 var resource_maker_ids = {
@@ -31,6 +31,7 @@ var world_layers = {
 }
 
 # Grass will need to be added manualy eventually
+onready var Y_Sort = get_node("YSort")
 onready var Walls = preload("res://World/Walls.tscn").instance()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
 onready var Corrupt_Grass = preload("res://World/Environment/Corrupt_Grass.tscn").instance()
@@ -42,7 +43,7 @@ var PB_length = 15 # 15 frames
 
 func _ready():
 	# Setup 
-	get_node("YSort").add_child(Walls)
+	add_child(Walls)
 	add_child(Grass)
 	add_child(Corrupt_Grass)
 	add_child(ProgressBarIcon)
@@ -80,7 +81,7 @@ func _ready():
 			spawn_instance("corrupt_grass", Vector2(zero_pos.x+j, zero_pos.y+i), 0)
 	# Spawn objects
 	spawn_instance("berry", Vector2(23,11))
-	spawn_instance("stone", Vector2(22,9))
+	#spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos)
 	spawn_instance("stone_formation", Vector2(20,11))
 	# Spawn walls
@@ -177,16 +178,14 @@ func find_dump_walls(new_walls_pos):
 func spawn_instance(instance_id, pos, tilemap_id = false, wall_level = 0):
 	if instance_id in resource_ids.keys():
 		var spawned_instance = resource_ids[instance_id].instance()
-		spawned_instance.set_position(Grass.map_to_world(pos))
-		spawned_instance.z_index = -1
+		spawned_instance.set_position(Grass.map_to_world(pos) + spawned_instance.self_offset)
 		world_layers["resources"][pos.y][pos.x].append(spawned_instance) 
-		add_child(spawned_instance)
+		Y_Sort.add_child(spawned_instance)
 	elif instance_id in resource_maker_ids.keys():
 		var spawned_instance = resource_maker_ids[instance_id].instance()
-		spawned_instance.set_position(Grass.map_to_world(pos))
-		spawned_instance.z_index = -1
+		spawned_instance.set_position(Grass.map_to_world(pos) + spawned_instance.self_offset)
 		world_layers["resource_makers"][pos.y][pos.x].append(spawned_instance) 
-		add_child(spawned_instance)
+		Y_Sort.add_child(spawned_instance)
 	elif instance_id == "wall":
 		Walls.set_cellv(pos, tilemap_id)
 		var wall_attributes = {
