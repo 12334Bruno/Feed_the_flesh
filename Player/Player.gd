@@ -98,7 +98,7 @@ func _unhandled_input(event):
 			progress_bar = PB.instance()
 			Y_Sort.add_child(progress_bar)
 			progress_bar.animation = "no_color"
-			progress_bar.global_position = global_position - Vector2(8, 25) # Offset for visuals
+			progress_bar.global_position = global_position - Vector2(8, 20) # Offset for visuals
 			progress_bar.speed_scale /= time_to_harvest
 			progress_bar.playing = true
 			state = STOPPED
@@ -221,7 +221,6 @@ func highlight():
 		on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 		on_item = null
 	else:
-		grid_pos = Main.Grass.world_to_map(global_position+Vector2(0,-TILE_SIZE/2))
 		var wall_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
 		var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
 		if wall and (last_direction.x == 0 or last_direction.y == 0):
