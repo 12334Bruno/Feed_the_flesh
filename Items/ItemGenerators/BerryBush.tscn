@@ -1,10 +1,10 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Assets/Resources/berry_bush_ph.png" type="Texture" id=1]
 [ext_resource path="res://Items/ItemGenerators/BerryBush.gd" type="Script" id=2]
 [ext_resource path="res://Shaders/Highlight.gdshader" type="Shader" id=3]
 
-[sub_resource type="ShaderMaterial" id=2]
+[sub_resource type="ShaderMaterial" id=3]
 resource_local_to_scene = true
 shader = ExtResource( 3 )
 shader_param/color = Color( 1, 1, 1, 1 )
@@ -13,17 +13,21 @@ shader_param/pattern = 0
 shader_param/inside = false
 shader_param/add_margins = true
 
-[sub_resource type="SpriteFrames" id=1]
+[sub_resource type="AtlasTexture" id=1]
+atlas = ExtResource( 1 )
+region = Rect2( 0, 0, 16, 16 )
+
+[sub_resource type="SpriteFrames" id=2]
 animations = [ {
-"frames": [ ExtResource( 1 ) ],
+"frames": [ SubResource( 1 ) ],
 "loop": false,
 "name": "default",
-"speed": 5.0
+"speed": 1.0
 } ]
 
-[node name="BerryBush" type="AnimatedSprite"]
-material = SubResource( 2 )
-frames = SubResource( 1 )
-offset = Vector2( 8, 8 )
+[node name="BerryBush" type="Node2D"]
 script = ExtResource( 2 )
-time_to_harvest = 0.7
+
+[node name="Visual" type="AnimatedSprite" parent="."]
+material = SubResource( 3 )
+frames = SubResource( 2 )

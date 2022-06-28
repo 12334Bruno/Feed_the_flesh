@@ -32,7 +32,7 @@ var state = ACTIVE
 
 # Load scenes
 onready var Main = get_parent().get_parent()
-onready var Berry = preload("res://Items/Berries.tscn")
+onready var Y_Sort = Main.get_node("YSort")
 onready var PB = preload("res://ProgressBarIcon/ProgressBarIcon.tscn")
 var progress_bar = null
 
@@ -96,7 +96,7 @@ func _unhandled_input(event):
 			harvesting = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x][0]
 			time_to_harvest = harvesting.time_to_harvest
 			progress_bar = PB.instance()
-			add_child(progress_bar)
+			Y_Sort.add_child(progress_bar)
 			progress_bar.animation = "no_color"
 			progress_bar.global_position = global_position - Vector2(8, 25) # Offset for visuals
 			progress_bar.speed_scale /= time_to_harvest
@@ -115,7 +115,7 @@ func harvesting(delta):
 	# After a certain time harvest the material and add it to held_items
 	if harvest_timer >= time_to_harvest:
 		var resource = harvesting.resource.instance()
-		Main.add_child(resource)
+		Y_Sort.add_child(resource)
 		held_items.append(resource)
 		harvest_timer = 0
 		
@@ -156,7 +156,7 @@ func take_player_input():
 
 func interact():
 	if held_items:
-		held_items[0].global_position = Vector2(global_position.x, global_position.y - 8)
+		held_items[0].global_position = Vector2(global_position.x, global_position.y) + (last_direction * 8)
 		
 		if stacking_items:
 			var tile_items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
@@ -212,13 +212,13 @@ func highlight():
 			
 			# Remove highlight from old item and add to new
 			if on_item != items[0] and on_item != null:
-				on_item.material.set_shader_param("width", 0.0)
+				on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 			on_item = items[0]
-			items[0].material.set_shader_param("width", 1.0)
+			items[0].get_node("Visual").material.set_shader_param("width", 1.0)
 
 	elif on_item != null:
 		# Turn of highlight if the player isn't on a item
-		on_item.material.set_shader_param("width", 0.0)
+		on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 		on_item = null
 	else:
 		grid_pos = Main.Grass.world_to_map(global_position+Vector2(0,-TILE_SIZE/2))
@@ -255,7 +255,7 @@ func place_items(items2):
 	var items = [] + items2
 	for item in items:
 		Main.world_layers["resources"][grid_pos.y][grid_pos.x].append(item)
-		item.global_position = grid_pos * TILE_SIZE
+		item.global_position = grid_pos * TILE_SIZE + item.self_offset
 		item.visible = true
 		item.picked_up = false
 		held_items[0].picked_up = false
