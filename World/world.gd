@@ -43,7 +43,7 @@ var PB_length = 15 # 15 frames
 
 func _ready():
 	# Setup 
-	add_child(Walls)
+	Y_Sort.add_child(Walls)
 	add_child(Grass)
 	add_child(Corrupt_Grass)
 	add_child(ProgressBarIcon)
