@@ -16,6 +16,7 @@ var HOLDING_CAPACITY = 3
 var held_items = []
 var on_item = null
 var on_item_pos = null
+var front_pos = null
 var on_wall = null
 var stacking_items = true
 
@@ -62,10 +63,10 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_interact"):
 		
 		var items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
-		var front_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
 		if items == []:
 			items = Main.world_layers["resources"][front_pos.y][front_pos.x]
 		# Wall interaction has priority
+		
 		if !wall_interact() and can_place():
 			
 			if Input.is_action_just_pressed("ui_interact_one"):
@@ -211,7 +212,7 @@ func highlight():
 	var items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
 	items += Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
 	
-	var front_pos = Main.Grass.world_to_map(global_position + last_direction * TILE_SIZE / 2)
+	front_pos = Main.Grass.world_to_map(global_position + last_direction * TILE_SIZE / 2)
 	if items == []:
 		
 		items = Main.world_layers["resources"][front_pos.y][front_pos.x]
@@ -252,8 +253,10 @@ func take_items(items2):
 	var items = [] + items2
 	
 	for item in items:
+		var item_pos = Main.Grass.world_to_map(item.global_position)
+		
 		if len(held_items) < HOLDING_CAPACITY: 
-			Main.world_layers["resources"][on_item_pos.y][on_item_pos.x].erase(item)
+			Main.world_layers["resources"][item_pos.y][item_pos.x].erase(item)
 			held_items.append(item)
 	
 	for i in held_items:
@@ -304,7 +307,9 @@ func can_take():
 	if not on_item_pos:
 		return false
 	var tile_items = Main.world_layers["resources"][on_item_pos.y][on_item_pos.x]
-	if len(tile_items) <= 0 or held_items:
+	if len(tile_items) == 0 or held_items:
+		return false
+	if len(held_items) >= HOLDING_CAPACITY:
 		return false
 	return true
 
@@ -316,6 +321,8 @@ func can_switch():
 
 # Checks if player can harvest anything on current tile
 func can_harvest():
+	if len(held_items) >= HOLDING_CAPACITY:
+		return false
 	if not on_item_pos:
 		return false
 	var resource_maker = Main.world_layers["resource_makers"][on_item_pos.y][on_item_pos.x]
