@@ -101,6 +101,7 @@ func _unhandled_input(event):
 			progress_bar.global_position = global_position - Vector2(8, 20) # Offset for visuals
 			progress_bar.speed_scale /= time_to_harvest
 			progress_bar.playing = true
+			progress_bar.z_index = 10
 			state = STOPPED
 
 # Harvest any material
