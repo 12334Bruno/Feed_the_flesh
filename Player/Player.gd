@@ -15,6 +15,7 @@ var last_grid_pos = Vector2.ZERO
 var HOLDING_CAPACITY = 3
 var held_items = []
 var on_item = null
+var on_item_pos = null
 var on_wall = null
 var stacking_items = true
 
@@ -61,7 +62,9 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_interact"):
 		
 		var items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
-		
+		var front_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
+		if items == []:
+			items = Main.world_layers["resources"][front_pos.y][front_pos.x]
 		# Wall interaction has priority
 		if !wall_interact() and can_place():
 			
@@ -93,7 +96,7 @@ func _unhandled_input(event):
 			
 		
 		elif can_harvest():
-			harvesting = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x][0]
+			harvesting = Main.world_layers["resource_makers"][on_item_pos.y][on_item_pos.x][0]
 			time_to_harvest = harvesting.time_to_harvest
 			progress_bar = PB.instance()
 			Y_Sort.add_child(progress_bar)
@@ -126,6 +129,7 @@ func harvesting(delta):
 			if harvesting.uses == 1:
 				stop = true
 				on_item = null
+				on_item_pos = null
 			harvesting.uses -= 1
 		
 		# Only for visual queue
@@ -206,6 +210,13 @@ func update_player_position(delta):
 func highlight():
 	var items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
 	items += Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
+	
+	var front_pos = Main.Grass.world_to_map(global_position + last_direction * TILE_SIZE / 2)
+	if items == []:
+		
+		items = Main.world_layers["resources"][front_pos.y][front_pos.x]
+		items += Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
+	
 	# Set highlight if player is on interactable item 
 	if len(items) > 0:
 		# Check if item is interactable
@@ -215,23 +226,24 @@ func highlight():
 			if on_item != items[0] and on_item != null:
 				on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 			on_item = items[0]
+			on_item_pos = Main.Grass.world_to_map(on_item.position)
 			items[0].get_node("Visual").material.set_shader_param("width", 1.0)
 
 	elif on_item != null:
 		# Turn of highlight if the player isn't on a item
 		on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 		on_item = null
+		on_item_pos = null
 	else:
-		var wall_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
-		var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
+		var wall = Main.world_layers["flesh_wall"][front_pos.y][front_pos.x]
 		if wall and (last_direction.x == 0 or last_direction.y == 0):
 			on_wall = true
 		else:
 			on_wall = false
 		if on_wall:
-			Main.ProgressBarIcon.set_position(Main.Grass.map_to_world(wall_pos)) 
+			Main.ProgressBarIcon.set_position(Main.Grass.map_to_world(front_pos)) 
 			Main.ProgressBarIcon.visible = true
-			Main.update_wall_progress(wall_pos)
+			Main.update_wall_progress(front_pos)
 		else:
 			Main.ProgressBarIcon.visible = false
 
@@ -241,7 +253,7 @@ func take_items(items2):
 	
 	for item in items:
 		if len(held_items) < HOLDING_CAPACITY: 
-			Main.world_layers["resources"][grid_pos.y][grid_pos.x].erase(item)
+			Main.world_layers["resources"][on_item_pos.y][on_item_pos.x].erase(item)
 			held_items.append(item)
 	
 	for i in held_items:
@@ -289,7 +301,9 @@ func can_place():
 	
 # Checks if items can be taken from current tile
 func can_take():
-	var tile_items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
+	if not on_item_pos:
+		return false
+	var tile_items = Main.world_layers["resources"][on_item_pos.y][on_item_pos.x]
 	if len(tile_items) <= 0 or held_items:
 		return false
 	return true
@@ -302,8 +316,9 @@ func can_switch():
 
 # Checks if player can harvest anything on current tile
 func can_harvest():
-	var grid_pos = Main.Grass.world_to_map(global_position)
-	var resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
+	if not on_item_pos:
+		return false
+	var resource_maker = Main.world_layers["resource_makers"][on_item_pos.y][on_item_pos.x]
 	if len(resource_maker) <= 0:
 		return false
 	if held_items and resource_maker[0].resource_name != held_items[0].item_name:
