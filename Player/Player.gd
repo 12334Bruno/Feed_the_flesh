@@ -73,16 +73,16 @@ func _unhandled_input(event):
 			took_front_item = front_pos
 			items = Main.world_layers["resources"][front_pos.y][front_pos.x]
       
-		# Wall interaction has priority
-		if !wall_interact() and can_place(items):
-    
+		var resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
+		if resource_maker == []:
+			resource_maker = Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
+	
 		# Wall interaction has priority
 		if wall_interact():
 			pass
 		elif altar_interact():
 			pass
-		elif can_place():
-			
+		elif can_place(items):
 			if Input.is_action_just_pressed("ui_interact_one"):
 				stacking_items = false
 				# Visuals
