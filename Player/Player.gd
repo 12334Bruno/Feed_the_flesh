@@ -36,11 +36,16 @@ var state = ACTIVE
 onready var Main = get_parent().get_parent()
 onready var Y_Sort = Main.get_node("YSort")
 onready var PB = preload("res://ProgressBarIcon/ProgressBarIcon.tscn")
+onready var FB = preload("res://Player/FeedMeter.tscn").instance() # Feed Bar
+onready var TB = preload("res://Player/CycleTimer.tscn").instance() # Time Bar (to next feasting)
 var progress_bar = null
 
 # Load nodes
 onready var text_label = $Control/Label
 
+func _ready():
+	add_child(FB)
+	add_child(TB)
 
 func set_text():
 	text_label.text = str(len(held_items), "/", HOLDING_CAPACITY)
@@ -66,8 +71,11 @@ func _unhandled_input(event):
 		if items == []:
 			items = Main.world_layers["resources"][front_pos.y][front_pos.x]
 		# Wall interaction has priority
-		
-		if !wall_interact() and can_place():
+		if wall_interact():
+			pass
+		elif altar_interact():
+			pass
+		elif can_place():
 			
 			if Input.is_action_just_pressed("ui_interact_one"):
 				stacking_items = false
@@ -175,7 +183,7 @@ func wall_interact():
 	# Check for walls in direction of last movement
 	# Change player position to center (leg hitbox doesn't work)
 	
-	var wall_pos = Vector2(grid_pos.x+round(last_direction.x), grid_pos.y+round(last_direction.y))
+	var wall_pos = front_pos
 	var wall = Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]
 	if wall and (last_direction.x == 0 or last_direction.y == 0) and (held_items 
 		and held_items[0].item_name == "berry"):
@@ -194,6 +202,18 @@ func wall_interact():
 			Main.update_wall_progress(wall_pos)
 		set_text()
 		return true
+	return false
+	
+func altar_interact():
+	if front_pos == Main.center_pos:
+		if held_items and held_items[0].item_name == "berry" and FB.current != FB.threshold:
+			for i in range(len(held_items)):
+				if FB.current < FB.threshold:
+					held_items[0].queue_free()
+					held_items.remove(0)
+					FB.update_bar(1)
+			set_text()
+			return true
 	return false
 
 
@@ -306,6 +326,7 @@ func can_place():
 func can_take():
 	if not on_item_pos:
 		return false
+	
 	var tile_items = Main.world_layers["resources"][on_item_pos.y][on_item_pos.x]
 	if len(tile_items) == 0 or held_items:
 		return false
