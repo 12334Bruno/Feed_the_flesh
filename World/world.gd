@@ -9,6 +9,7 @@ var walls_to_dump = []
 
 var dump_timer = Timer.new()
 var wall_levels = [1,2,3,4,5] 
+var feed_timer = Timer.new()
 
 var circ = 9 # Circumference of corrupt area
 var center_pos = Vector2(world_width/2, world_height/2) # Center of corrupt area
@@ -30,8 +31,8 @@ var world_layers = {
 	"flesh_wall": [],
 }
 
-# Grass will need to be added manualy eventually
 onready var Y_Sort = get_node("YSort")
+onready var Player = get_node("YSort").get_node("Player")
 onready var Walls = preload("res://World/Walls.tscn").instance()
 onready var Grass = preload("res://World/Environment/Grass.tscn").instance()
 onready var Corrupt_Grass = preload("res://World/Environment/Corrupt_Grass.tscn").instance()
@@ -53,6 +54,12 @@ func _ready():
 	dump_timer.set_one_shot(false)
 	add_child(dump_timer)
 	dump_timer.start()
+	# Init feed timer
+	feed_timer.connect("timeout", self, "feasting")
+	feed_timer.set_wait_time(1)
+	feed_timer.set_one_shot(false)
+	add_child(feed_timer)
+	feed_timer.start()
 	# Save world tiles and wall tiles into array 
 	for _i in range(world_height):
 		var row = []
@@ -82,7 +89,7 @@ func _ready():
 	# Spawn objects
 	spawn_instance("berry", Vector2(23,11))
 	#spawn_instance("stone", Vector2(22,9))
-	spawn_instance("berry_bush", center_pos)
+	spawn_instance("berry_bush", center_pos+Vector2(0,-1))
 	spawn_instance("stone_formation", Vector2(20,11))
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
@@ -102,6 +109,24 @@ func _ready():
 				spawn_instance("wall", tile_pos, 1)
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
 				spawn_instance("corrupt_grass", tile_pos, 0)
+#	zero_pos -= Vector2(1,1)
+#	circ += 2
+#	for i in range(circ):
+#		var placement = []
+#		if i <= circ / 2:
+#			placement = [circ / 2 - i,circ / 2 - i - 1, 
+#						 circ / 2 + i,circ / 2 + i + 1]
+#		else:
+#			placement = [i - ceil(float(circ)/2), i - circ/2,
+#						 circ + circ / 2 - i, circ + circ / 2 - 1 - i]
+#		for j in placement:
+#			var tile_pos = Vector2(zero_pos.x+j, zero_pos.y+i)
+#			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= circ - 1:
+#				# Spawn and add to wall_tiles
+#				spawn_instance("wall", tile_pos, 1)
+#				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
+#				spawn_instance("corrupt_grass", tile_pos, 0)
+	
 				
 func wall_dump():
 	# Sometimes wall doesn't get dumped every cycle, need to fix
@@ -174,6 +199,17 @@ func find_dump_walls(new_walls_pos):
 			new_walls_to_dump.append(wall_pos)
 	for wall in new_walls_to_dump:
 		walls_to_dump.append(wall)
+		
+func feasting():
+	if Player.TB.cycle_time > Player.TB.current_time:
+		Player.TB.update_bar(1)
+	elif Player.FB.current != Player.FB.threshold:
+		print("GAME OVER")
+	else:
+		Player.FB.current = 0
+		Player.FB.threshold = Player.FB.thresholds[Player.FB.thresholds.find(Player.FB.threshold,0)+1]
+		Player.FB.update_bar()
+		Player.TB.current_time = 0
 	
 func spawn_instance(instance_id, pos, tilemap_id = false, wall_level = 0):
 	if instance_id in resource_ids.keys():

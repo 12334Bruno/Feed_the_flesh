@@ -36,11 +36,16 @@ var state = ACTIVE
 onready var Main = get_parent().get_parent()
 onready var Y_Sort = Main.get_node("YSort")
 onready var PB = preload("res://ProgressBarIcon/ProgressBarIcon.tscn")
+onready var FB = preload("res://Player/FeedMeter.tscn").instance() # Feed Bar
+onready var TB = preload("res://Player/CycleTimer.tscn").instance() # Time Bar (to next feasting)
 var progress_bar = null
 
 # Load nodes
 onready var text_label = $Control/Label
 
+func _ready():
+	add_child(FB)
+	add_child(TB)
 
 func set_text():
 	text_label.text = str(len(held_items), "/", HOLDING_CAPACITY)
@@ -67,13 +72,16 @@ func _unhandled_input(event):
 		if items == []:
 			took_front_item = front_pos
 			items = Main.world_layers["resources"][front_pos.y][front_pos.x]
-			
-		var resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
-		if resource_maker == []:
-			resource_maker = Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
-		
+      
 		# Wall interaction has priority
 		if !wall_interact() and can_place(items):
+    
+		# Wall interaction has priority
+		if wall_interact():
+			pass
+		elif altar_interact():
+			pass
+		elif can_place():
 			
 			if Input.is_action_just_pressed("ui_interact_one"):
 				stacking_items = false
@@ -183,6 +191,7 @@ func wall_interact():
 	# Change player position to center (leg hitbox doesn't work)
 	
 	var wall = Main.world_layers["flesh_wall"][front_pos.y][front_pos.x]
+  
 	if wall and (last_direction.x == 0 or last_direction.y == 0) and (held_items 
 		and held_items[0].item_name == "berry"):
 		if len(held_items) >= wall["food_to_next_lvl"] - wall["current_food"]:
@@ -200,6 +209,18 @@ func wall_interact():
 			Main.update_wall_progress(front_pos)
 		set_text()
 		return true
+	return false
+	
+func altar_interact():
+	if front_pos == Main.center_pos:
+		if held_items and held_items[0].item_name == "berry" and FB.current != FB.threshold:
+			for i in range(len(held_items)):
+				if FB.current < FB.threshold:
+					held_items[0].queue_free()
+					held_items.remove(0)
+					FB.update_bar(1)
+			set_text()
+			return true
 	return false
 
 
