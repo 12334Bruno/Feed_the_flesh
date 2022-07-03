@@ -72,7 +72,7 @@ func _unhandled_input(event):
 		if items == []:
 			took_front_item = front_pos
 			items = Main.world_layers["resources"][front_pos.y][front_pos.x]
-      
+		
 		var resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
 		if resource_maker == []:
 			resource_maker = Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
@@ -83,6 +83,7 @@ func _unhandled_input(event):
 		elif altar_interact():
 			pass
 		elif can_place(items):
+			
 			if Input.is_action_just_pressed("ui_interact_one"):
 				stacking_items = false
 				# Visuals
@@ -155,7 +156,7 @@ func harvesting(delta):
 		resource.picked_up = true
 		
 		# Stop harvesting if HOLDING_CAPACITY is full
-		if len(held_items) >= HOLDING_CAPACITY:
+		if len(held_items) >= HOLDING_CAPACITY or not harvesting.can_harvest:
 			stop = true
 	
 	if stop:
@@ -212,7 +213,7 @@ func wall_interact():
 	return false
 	
 func altar_interact():
-	if front_pos == Main.center_pos:
+	if front_pos == Main.center_pos or grid_pos == Main.center_pos:
 		if held_items and held_items[0].item_name == "berry" and FB.current != FB.threshold:
 			for i in range(len(held_items)):
 				if FB.current < FB.threshold:
@@ -294,7 +295,6 @@ func take_items(items2):
 
 # Function takes an array of items
 func place_items(items2, item_pos = null):
-	print(item_pos)
 	var items = [] + items2
 
 	if not item_pos:
@@ -339,6 +339,10 @@ func can_take(tile_items):
 		return false
 	if len(held_items) >= HOLDING_CAPACITY:
 		return false
+		
+	# Ensure resource makers on player pos are prioritez over items on front_pos
+	if len(Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]) > 0:
+		return false
 	return true
 
 func can_switch(tile_items):
@@ -353,5 +357,7 @@ func can_harvest(resource_maker):
 	if len(resource_maker) <= 0:
 		return false
 	if held_items and resource_maker[0].resource_name != held_items[0].item_name:
+		return false
+	if resource_maker[0].can_harvest == false:
 		return false
 	return true
