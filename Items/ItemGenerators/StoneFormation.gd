@@ -4,11 +4,14 @@ extends Node2D
 onready var resource = preload("res://Items/Stone.tscn")
 onready var Main = get_parent().get_parent()
 
-# Obejct info
+# General obejct info
 var item_name = "stone_formation"
 var resource_name = "stone"
 var interactable = true
 var self_offset = Vector2(8, 8)
+
+# Specific object info
+var can_harvest = true
 export var time_to_harvest : float = 0.5
 var uses = 5 setget set_uses
 
