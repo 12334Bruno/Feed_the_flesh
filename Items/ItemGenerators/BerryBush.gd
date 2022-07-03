@@ -19,7 +19,6 @@ var can_harvest = false
 
 
 func set_uses(value):
-	print(can_harvest)
 	if uses == 0:
 		var grid_pos = Main.Grass.world_to_map(global_position)
 		Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x].erase(self)
@@ -32,7 +31,6 @@ func set_uses(value):
 
 
 func _on_Timer_timeout():
-	print("stop")
 	timer.stop()
 	visual.set_frame(1)
 	can_harvest = true

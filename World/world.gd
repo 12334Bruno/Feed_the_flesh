@@ -90,6 +90,9 @@ func _ready():
 	spawn_instance("berry", Vector2(23,11))
 	#spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos+Vector2(0,-1))
+	spawn_instance("berry_bush", center_pos+Vector2(-1,-1))
+	spawn_instance("berry_bush", center_pos+Vector2(0,-2))
+	spawn_instance("berry_bush", center_pos+Vector2(-1,-2))
 	spawn_instance("stone_formation", Vector2(20,11))
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
@@ -204,7 +207,7 @@ func feasting():
 	if Player.TB.cycle_time > Player.TB.current_time:
 		Player.TB.update_bar(1)
 	elif Player.FB.current != Player.FB.threshold:
-		print("GAME OVER")
+		pass
 	else:
 		Player.FB.current = 0
 		Player.FB.threshold = Player.FB.thresholds[Player.FB.thresholds.find(Player.FB.threshold,0)+1]
