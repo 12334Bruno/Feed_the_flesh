@@ -90,9 +90,6 @@ func _ready():
 	spawn_instance("berry", Vector2(23,11))
 	#spawn_instance("stone", Vector2(22,9))
 	spawn_instance("berry_bush", center_pos+Vector2(0,-1))
-	spawn_instance("berry_bush", center_pos+Vector2(-1,-1))
-	spawn_instance("berry_bush", center_pos+Vector2(0,-2))
-	spawn_instance("berry_bush", center_pos+Vector2(-1,-2))
 	spawn_instance("stone_formation", Vector2(20,11))
 	# Spawn walls
 	zero_pos -= Vector2(1,1)
@@ -112,23 +109,23 @@ func _ready():
 				spawn_instance("wall", tile_pos, 1)
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
 				spawn_instance("corrupt_grass", tile_pos, 0)
-#	zero_pos -= Vector2(1,1)
-#	circ += 2
-#	for i in range(circ):
-#		var placement = []
-#		if i <= circ / 2:
-#			placement = [circ / 2 - i,circ / 2 - i - 1, 
-#						 circ / 2 + i,circ / 2 + i + 1]
-#		else:
-#			placement = [i - ceil(float(circ)/2), i - circ/2,
-#						 circ + circ / 2 - i, circ + circ / 2 - 1 - i]
-#		for j in placement:
-#			var tile_pos = Vector2(zero_pos.x+j, zero_pos.y+i)
-#			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= circ - 1:
-#				# Spawn and add to wall_tiles
-#				spawn_instance("wall", tile_pos, 1)
-#				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
-#				spawn_instance("corrupt_grass", tile_pos, 0)
+	zero_pos -= Vector2(1,1)
+	circ += 2
+	for i in range(circ):
+		var placement = []
+		if i <= circ / 2:
+			placement = [circ / 2 - i,circ / 2 - i - 1, 
+						 circ / 2 + i,circ / 2 + i + 1]
+		else:
+			placement = [i - ceil(float(circ)/2), i - circ/2,
+						 circ + circ / 2 - i, circ + circ / 2 - 1 - i]
+		for j in placement:
+			var tile_pos = Vector2(zero_pos.x+j, zero_pos.y+i)
+			if Walls.get_cellv(tile_pos) != 0 and j >= 0 and j <= circ - 1:
+				# Spawn and add to wall_tiles
+				spawn_instance("wall", tile_pos, 1)
+				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),Vector2(tile_pos.x+1,tile_pos.y+1))
+				spawn_instance("corrupt_grass", tile_pos, 0)
 	
 				
 func wall_dump():
@@ -146,12 +143,12 @@ func wall_dump():
 func build_wall(wall_pos, player_grid_pos):
 	var new_walls_pos = []
 	# Create new walls
-	for i in range(3):
-		for j in range(3):
-			var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
+	for i in range(5):
+		for j in range(5):
+			var tile_pos = Vector2(wall_pos.x-2+j,wall_pos.y-2+i)
 			if (!(world_layers["flesh_wall"][tile_pos.y][tile_pos.x]) and 
-			player_grid_pos != tile_pos and 
-			Corrupt_Grass.get_cellv(tile_pos) == -1):
+			player_grid_pos != tile_pos and Corrupt_Grass.get_cellv(tile_pos) == -1 and
+			!((i == 0 or i == 4) and (j == 0 or j == 4))):
 				new_walls_pos.append(tile_pos)
 				spawn_instance("wall", tile_pos, 1, wall_level(tile_pos))
 				Walls.update_bitmask_region(Vector2(tile_pos.x-1,tile_pos.y-1),
@@ -185,20 +182,22 @@ func wall_level(wall_pos):
 func find_dump_walls(new_walls_pos):
 	var walls_to_check = []
 	for wall_pos in new_walls_pos:
-		for i in range(3):
-			for j in range(3):
-				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if world_layers["flesh_wall"][tile_pos.y][tile_pos.x]:
+		for i in range(5):
+			for j in range(5):
+				var tile_pos = Vector2(wall_pos.x-2+j,wall_pos.y-2+i)
+				if (world_layers["flesh_wall"][tile_pos.y][tile_pos.x] and 
+				!((i == 0 or i == 4) and (j == 0 or j == 4))):
 					walls_to_check.append(tile_pos)
 	var new_walls_to_dump = []
 	for wall_pos in walls_to_check:
 		var corrupt_surroundings = 0
-		for i in range(3):
-			for j in range(3):
-				var tile_pos = Vector2(wall_pos.x-1+j,wall_pos.y-1+i)
-				if tile_pos != wall_pos and Corrupt_Grass.get_cellv(tile_pos) != -1:
+		for i in range(5):
+			for j in range(5):
+				var tile_pos = Vector2(wall_pos.x-2+j,wall_pos.y-2+i)
+				if (Corrupt_Grass.get_cellv(tile_pos) != -1 and 
+				!((i == 0 or i == 4) and (j == 0 or j == 4))):
 					corrupt_surroundings += 1
-		if corrupt_surroundings == 8 and !walls_to_dump.has(wall_pos):
+		if corrupt_surroundings == 21 and !walls_to_dump.has(wall_pos):
 			new_walls_to_dump.append(wall_pos)
 	for wall in new_walls_to_dump:
 		walls_to_dump.append(wall)
