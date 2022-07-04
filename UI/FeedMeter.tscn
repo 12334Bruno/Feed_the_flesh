@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Assets/FeedProgressBar/feed_progress_bar-export-export.png" type="Texture" id=1]
+[ext_resource path="res://Assets/FeedProgressBar/feed_bar_under.png" type="Texture" id=2]
+[ext_resource path="res://Assets/FeedProgressBar/feed_bar.png" type="Texture" id=3]
+[ext_resource path="res://UI/FeedMeter.gd" type="Script" id=4]
+
+[node name="FeedMeter" type="TextureProgress"]
+margin_left = 37.0
+margin_top = -72.0
+margin_right = 127.0
+margin_bottom = -60.0
+texture_under = ExtResource( 2 )
+texture_over = ExtResource( 3 )
+texture_progress = ExtResource( 1 )
+tint_progress = Color( 0.956863, 1, 0.341176, 1 )
+script = ExtResource( 4 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tween" type="Tween" parent="."]

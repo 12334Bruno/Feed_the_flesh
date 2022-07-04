@@ -27,10 +27,12 @@ func set_uses(value):
 		timer.start()
 		visual.set_frame(0)
 		can_harvest = false
+		interactable = false
 		uses = value
 
 
 func _on_Timer_timeout():
 	timer.stop()
 	visual.set_frame(1)
+	interactable = true
 	can_harvest = true

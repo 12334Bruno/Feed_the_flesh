@@ -36,8 +36,8 @@ var state = ACTIVE
 onready var Main = get_parent().get_parent()
 onready var Y_Sort = Main.get_node("YSort")
 onready var PB = preload("res://ProgressBarIcon/ProgressBarIcon.tscn")
-onready var FB = preload("res://Player/FeedMeter.tscn").instance() # Feed Bar
-onready var TB = preload("res://Player/CycleTimer.tscn").instance() # Time Bar (to next feasting)
+onready var FB = preload("res://UI/FeedMeter.tscn").instance() # Feed Bar
+onready var TB = preload("res://UI/CycleTimer.tscn").instance() # Time Bar (to next feasting)
 var progress_bar = null
 
 # Load nodes
@@ -250,14 +250,14 @@ func highlight():
 	if len(items) > 0:
 		# Check if item is interactable
 		if items[0].get("interactable"):
-			
 			# Remove highlight from old item and add to new
 			if on_item != items[0] and on_item != null:
 				on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 			on_item = items[0]
 			on_item_pos = Main.Grass.world_to_map(on_item.position)
 			items[0].get_node("Visual").material.set_shader_param("width", 1.0)
-
+		elif items[0].get("interactable") == false:
+			items[0].get_node("Visual").material.set_shader_param("width", 0.0)
 	elif on_item != null:
 		# Turn of highlight if the player isn't on a item
 		on_item.get_node("Visual").material.set_shader_param("width", 0.0)
@@ -328,6 +328,9 @@ func can_place(tile_items):
 	# Check no resource makers are occupying the tile
 	if Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]:
 		return false
+	if Main.world_layers["resource_makers"][front_pos.y][front_pos.x]:
+		if Main.world_layers["resource_makers"][front_pos.y][front_pos.x][0].get("interactable") == true:
+			return false
 	if Main.world_layers["flesh_wall"][grid_pos.y][grid_pos.x]:
 		return false
 	
