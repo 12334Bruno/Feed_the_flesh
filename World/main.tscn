@@ -1,13 +1,38 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://Player/Player.tscn" type="PackedScene" id=1]
+[ext_resource path="res://UI/CycleTimer.tscn" type="PackedScene" id=2]
+[ext_resource path="res://UI/FeedMeter.tscn" type="PackedScene" id=3]
 [ext_resource path="res://World/world.gd" type="Script" id=4]
 
 [node name="main" type="Node2D"]
 script = ExtResource( 4 )
 
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2( 305, 203 )
+current = true
+process_mode = 0
+smoothing_enabled = true
+
 [node name="YSort" type="YSort" parent="."]
 
 [node name="Player" parent="YSort" instance=ExtResource( 1 )]
-position = Vector2( 306, 181 )
+position = Vector2( 305, 203 )
 collision_mask = 0
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="YSort/Player"]
+remote_path = NodePath("../../../Camera2D")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="CycleTimer" parent="CanvasLayer" instance=ExtResource( 2 )]
+margin_left = 223.0
+margin_top = 30.0
+margin_right = 247.0
+margin_bottom = 54.0
+
+[node name="FeedMeter" parent="CanvasLayer" instance=ExtResource( 3 )]
+margin_left = 157.0
+margin_top = 10.0
+margin_right = 247.0
+margin_bottom = 22.0
