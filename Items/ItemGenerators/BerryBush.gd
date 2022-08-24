@@ -9,8 +9,8 @@ onready var Main = get_parent().get_parent()
 # General obejct info
 var item_name = "berry_bush"
 var resource_name = "berry"
-var self_offset = Vector2(8, 12)
-var interactable = true
+var self_offset = Vector2(8, 6)
+var interactable = false
 
 # Specific object info
 export var time_to_harvest : float = 0.5
