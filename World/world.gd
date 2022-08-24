@@ -43,6 +43,8 @@ var PB_length = 15 # 15 frames
 # meaning, the player doesn't invest in a wall, which he didn't know needed more berries than the last
 
 func _ready():
+	Globals.Main = self
+	
 	# Setup 
 	Y_Sort.add_child(Walls)
 	add_child(Grass)

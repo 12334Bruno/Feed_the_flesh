@@ -12,8 +12,8 @@ var grid_pos = Vector2.ZERO
 var last_grid_pos = Vector2.ZERO
 
 # Items
-var HOLDING_CAPACITY = 3
 var held_items = []
+var HOLDING_CAPACITY = 3
 var on_item = null
 var front_pos = null
 var on_wall = null
@@ -37,19 +37,20 @@ onready var Y_Sort = Main.get_node("YSort")
 onready var PB = preload("res://ProgressBarIcon/ProgressBarIcon.tscn")
 onready var FB = Main.get_node("CanvasLayer/FeedMeter") #preload("res://UI/FeedMeter.tscn").instance() # Feed Bar
 onready var TB = Main.get_node("CanvasLayer/CycleTimer") #preload("res://UI/CycleTimer.tscn").instance() # Time Bar (to next feasting)
+onready var InventorySlot = Main.get_node("CanvasLayer/InventorySlot")
+onready var InventoryLabel = Main.get_node("CanvasLayer/InventoryLabel/Label")
 var progress_bar = null
 
 # Load nodes
-onready var text_label = $Control/Label
+
 
 # Load animations
 onready var animationTree = $AnimationTree
 onready var animationPlayer = $AnimationPlayer
 onready var animationState = animationTree.get('parameters/playback')
 
-	
 func set_text():
-	text_label.text = str(len(held_items), "/", HOLDING_CAPACITY)
+	InventoryLabel.text = str(len(held_items), "/", HOLDING_CAPACITY)
 
 func _physics_process(delta):
 	highlight()
@@ -110,6 +111,7 @@ func harvesting(delta):
 		var resource = harvesting.resource.instance()
 		Y_Sort.add_child(resource)
 		held_items.append(resource)
+		InventorySlot.item = held_items[0]
 		harvest_timer = 0
 		
 		
@@ -154,7 +156,8 @@ func take_player_input():
 
 func automatic_interact():
 	if held_items:
-		held_items[0].global_position = Vector2(global_position.x, global_position.y) + (last_direction * 8)
+		#held_items[0].global_position = Vector2(global_position.x, global_position.y) + (last_direction * 8)
+		
 		
 		if stacking_items:
 			var tile_items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
@@ -181,18 +184,21 @@ func can_interact():
 				return "grid_wall_interactable"
 			if Main.world_layers["flesh_wall"][front_pos.y][front_pos.x]:
 				return "front_wall_interactable"
-		if front_pos == Main.center_pos and FB.current != FB.threshold:
+		if (front_pos == Main.center_pos or grid_pos == Main.center_pos) and FB.current != FB.threshold:
 			return "front_altar_interactable"
 	# Harvest interaction
-	if len(held_items) < HOLDING_CAPACITY:
-		var tile_resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
-		var front_resource_maker = Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
-		if tile_resource_maker and tile_resource_maker[0].can_harvest:
+	var tile_resource_maker = Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
+#	var front_resource_maker = Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
+	if tile_resource_maker:
+		if tile_resource_maker[0].can_harvest and len(held_items) < HOLDING_CAPACITY:
 			if (!held_items or held_items[0].item_name == tile_resource_maker[0].resource_name):
 				return "grid_harvest_interactable"
-		elif front_resource_maker and front_resource_maker[0].can_harvest:
-			if (!held_items or held_items[0].item_name == front_resource_maker[0].resource_name):
-				return "front_harvest_interactable"
+		return false
+#	elif front_resource_maker:
+#		if front_resource_maker[0].can_harvest and len(held_items) < HOLDING_CAPACITY:
+#			if (!held_items or held_items[0].item_name == front_resource_maker[0].resource_name):
+#				return "front_harvest_interactable"
+#		return false
 	# Place/Take iteraction
 	var tile_items = Main.world_layers["resources"][grid_pos.y][grid_pos.x]
 	# Player position doesn't have interactable resources
@@ -211,9 +217,9 @@ func can_interact():
 			if held_items:
 				if held_items[0].item_name == tile_items[0].item_name:
 					if Input.is_action_just_pressed("ui_interact_one") and (1 + len(tile_items) <= 3):
-						return "front_place_one_interactable"
+						return "front_take_one_interactable"
 					if len(held_items) + len(tile_items) <= 3:
-						return "front_place_some_interactable"
+						return "front_take_all_interactable"
 				else:
 					return "front_switch_interactable"
 			# Player doesn't hold items
@@ -246,10 +252,11 @@ func highlight():
 	items += Main.world_layers["resource_makers"][grid_pos.y][grid_pos.x]
 	
 	front_pos = Main.Grass.world_to_map(global_position + (last_direction * TILE_SIZE / 2))
+	print(grid_pos, "  ", front_pos)
 	if items == []:
 		
 		items = Main.world_layers["resources"][front_pos.y][front_pos.x]
-		items += Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
+#		items += Main.world_layers["resource_makers"][front_pos.y][front_pos.x]
 	
 	# Set highlight if player is on interactable item 
 	if len(items) > 0:
@@ -260,6 +267,7 @@ func highlight():
 				on_item.get_node("Visual").material.set_shader_param("width", 0.0)
 			on_item = items[0]
 			items[0].get_node("Visual").material.set_shader_param("width", 1.0)
+		# Remove higlight from old item, when facing a non-interactable object
 		elif items[0].get("interactable") == false:
 			items[0].get_node("Visual").material.set_shader_param("width", 0.0)
 	elif on_item != null:
@@ -303,7 +311,8 @@ func take_interact(item_pos, one):
 	for i in held_items:
 		i.visible = false
 		i.picked_up = true
-	held_items[0].visible = true
+	
+	InventorySlot.item = held_items[0]
 	set_text()
 
 # Function takes an array of items
@@ -312,8 +321,8 @@ func place_interact(item_pos, one):
 	if one == true:
 		stacking_items = false
 		# Visuals
-		if len(held_items) > 1:
-			held_items[1].visible = true
+#		if len(held_items) > 1:
+#			held_items[1].visible = true
 		items = [items[0]]
 	
 	for item in items:
@@ -323,18 +332,29 @@ func place_interact(item_pos, one):
 		item.picked_up = false
 		held_items[0].picked_up = false
 		held_items.erase(item)
+		
+	if !held_items:
+		InventorySlot.item = null
+		
 	set_text()
 		
 
 func switch_interact(item_pos):
 	var items = Main.world_layers["resources"][item_pos.y][item_pos.x]
-	var new_held_items = [] + held_items
+	var held_items1 = [] + held_items
 	held_items = []
 	stacking_items = false
-	take_interact(items, false)
-	place_interact(new_held_items, false)
-	for item in held_items:
-		item.text_label.visible = false
+	take_interact(item_pos, false)
+	var held_items2 = [] + held_items
+	held_items = held_items1
+	place_interact(item_pos, false)
+	held_items = held_items2
+	
+	InventorySlot.item = held_items[0]
+	set_text()
+#	for item in held_items:
+#		item.Label.visible = false
+	
 
 func harvest_interact(item_pos):
 	harvesting = Main.world_layers["resource_makers"][item_pos.y][item_pos.x][0]
@@ -346,6 +366,8 @@ func harvest_interact(item_pos):
 	progress_bar.speed_scale /= time_to_harvest
 	progress_bar.playing = true
 	progress_bar.z_index = 10
+	
+	animationState.travel("Idle")
 	state = STOPPED
 
 
@@ -356,13 +378,19 @@ func wall_interact(wall_pos):
 			held_items[0].queue_free()
 			held_items.remove(0)
 		if held_items:
-			held_items[0].visible = true
+			#held_items[0].visible = true
+			InventorySlot.item = held_items[0]
+		else:
+			InventorySlot.item = null
+			
 		Main.build_wall(wall_pos, grid_pos)
 	else:
 		Main.world_layers["flesh_wall"][wall_pos.y][wall_pos.x]["current_food"] += len(held_items)
 		for i in range(len(held_items)):
 			held_items[0].queue_free()
 			held_items.remove(0)
+		InventorySlot.item = null
+		
 		Main.update_wall_progress(wall_pos)
 	set_text()
 
@@ -373,3 +401,7 @@ func altar_interact():
 			held_items.remove(0)
 			FB.update_bar(1)
 	set_text()
+	if held_items:
+		InventorySlot.item = held_items[0]
+	else:
+		InventorySlot.item = null
